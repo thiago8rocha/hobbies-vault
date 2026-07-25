@@ -6,7 +6,6 @@
 ## Checklist
 
 - [ ] Commit messages follow the [Conventional Commits](../.github/CONTRIBUTING.md#commit-messages) convention.
-- [ ] Targets `nightly` if this needs testing first, or `main` if it's already verified/polished.
 - [ ] `CHANGELOG.md` updated under `[Unreleased]`, if user-facing.
 - [ ] Tested on a device/emulator.
 

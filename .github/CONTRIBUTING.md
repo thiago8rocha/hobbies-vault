@@ -25,18 +25,6 @@ and that existing contributors will not actively teach them to you.
 - [Android Studio](https://developer.android.com/studio)
 - Emulator or phone with developer options enabled to test changes.
 
-## Branch strategy
-
-- **`main`** is the stable branch. It only receives reviewed, working code (via pull request) and
-  is what release/beta builds are cut from.
-- **`nightly`** is the active development/testing branch. This is where day-to-day work lands
-  first; every push to it produces an automatic nightly prerelease (see
-  [Releases](#releases) below) so changes can be tried on a real device before they reach `main`.
-
-If you're opening a PR with work in progress or something you'd like tested before it's
-considered stable, target `nightly`. Bug fixes and polished features are welcome directly against
-`main`.
-
 ## Commit messages
 
 This project follows [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) —
@@ -89,8 +77,16 @@ See the PR template for the checklist. Keep PRs focused — one logical change p
 
 ## Releases
 
-Releases (stable, beta and nightly) are cut by the `Build app` GitHub Actions workflow. Version
-numbers follow [SemVer](https://semver.org/) (`MAJOR.MINOR.PATCH`); nightly builds are tagged
-`rN`, where `N` is the total commit count at build time. See
-[`CHANGELOG.md`](../CHANGELOG.md) for what belongs in the `Unreleased`/versioned sections that
+There's only one branch, `main` — pull requests merge straight into it. Releases (stable, beta
+and nightly) are cut by the `Build app` GitHub Actions workflow:
+
+- Every push to `main` automatically builds and publishes a **nightly** prerelease, tagged `rN`
+  where `N` is the total commit count at build time. Nightly is a build channel, not a branch —
+  it's just what every commit on `main` gets, for testing on a real device without waiting for a
+  proper release.
+- **Stable** and **beta** releases are cut manually by dispatching the same workflow
+  (`workflow_dispatch`) with a version number, from `main`. Version numbers follow
+  [SemVer](https://semver.org/) (`MAJOR.MINOR.PATCH`), with betas suffixed `-bN`.
+
+See [`CHANGELOG.md`](../CHANGELOG.md) for what belongs in the `Unreleased`/versioned sections that
 feed each release's notes.
