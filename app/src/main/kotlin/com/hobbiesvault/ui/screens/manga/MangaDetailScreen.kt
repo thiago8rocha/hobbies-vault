@@ -368,23 +368,6 @@ fun MangaDetailScreen(
                     }
                 }
 
-                // ── Sinônimos ────────────────────────────────────────────────
-                if (!synonyms.isNullOrEmpty()) {
-                    item {
-                        Column(Modifier.padding(horizontal = 16.dp)) {
-                            MangaSectionTitle("Sinônimos")
-                            Spacer(Modifier.height(8.dp))
-                            Text(
-                                synonyms.joinToString(", "),
-                                style      = MaterialTheme.typography.bodyMedium,
-                                color      = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                                lineHeight = 20.sp,
-                            )
-                            Spacer(Modifier.height(24.dp))
-                        }
-                    }
-                }
-
                 // ── Progresso de capítulos ────────────────────────────────────
                 item {
                     Column(Modifier.padding(horizontal = 16.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -427,14 +410,12 @@ fun MangaDetailScreen(
                     Column(Modifier.padding(horizontal = 16.dp)) {
                         MangaSectionTitle("Informações")
                         Spacer(Modifier.height(10.dp))
-                        Card(shape = RoundedCornerShape(12.dp)) {
-                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                if (format != null)            MangaInfoRow("Formato", format)
-                                if (!genres.isNullOrEmpty())   MangaInfoRow("Gênero", genres.take(3).joinToString(", "))
-                                if (volumes != null)           MangaInfoRow("Volumes", "$volumes")
-                                MangaInfoRow("Capítulos", chapters?.toString() ?: "Em andamento")
-                                if (serializationStatus != null) MangaInfoRow("Status", serializationStatus)
-                            }
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            if (format != null)            MangaInfoCard("Formato", format)
+                            if (!genres.isNullOrEmpty())   MangaInfoCard("Gênero", genres.take(3).joinToString(", "))
+                            if (volumes != null)           MangaInfoCard("Volumes", "$volumes")
+                            MangaInfoCard("Capítulos", chapters?.toString() ?: "Em andamento")
+                            if (serializationStatus != null) MangaInfoCard("Status", serializationStatus)
                         }
                     }
                     Spacer(Modifier.height(16.dp))
@@ -445,14 +426,15 @@ fun MangaDetailScreen(
                     Column(Modifier.padding(horizontal = 16.dp)) {
                         MangaSectionTitle("Datas")
                         Spacer(Modifier.height(10.dp))
-                        Card(shape = RoundedCornerShape(12.dp)) {
-                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                if (startDateMs != null) MangaInfoRow("Início", dateFormatter.format(java.util.Date(startDateMs)))
-                                if (endDateMs != null)   MangaInfoRow("Conclusão", dateFormatter.format(java.util.Date(endDateMs)))
-                                MangaInfoRow("Adicionado", dateFormatter.format(mediaItem.addedDate))
-                                if (mediaItem.completionDate != null) {
-                                    MangaInfoRow("Lido em", dateFormatter.format(mediaItem.completionDate))
-                                }
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            MangaInfoCard("Inclusão", dateFormatter.format(mediaItem.addedDate))
+                            if (mediaItem.readingStartDate != null) {
+                                MangaInfoCard("Início da leitura", dateFormatter.format(mediaItem.readingStartDate))
+                            }
+                            if (startDateMs != null) MangaInfoCard("Início da publicação", dateFormatter.format(java.util.Date(startDateMs)))
+                            if (endDateMs != null)   MangaInfoCard("Fim da publicação", dateFormatter.format(java.util.Date(endDateMs)))
+                            if (mediaItem.completionDate != null) {
+                                MangaInfoCard("Finalização da leitura", dateFormatter.format(mediaItem.completionDate))
                             }
                         }
                     }
@@ -694,6 +676,23 @@ fun MangaDetailScreen(
                 }
 
 
+                // ── Sinônimos (sempre por último) ───────────────────────────────
+                if (!synonyms.isNullOrEmpty()) {
+                    item {
+                        Column(Modifier.padding(horizontal = 16.dp)) {
+                            MangaSectionTitle("Sinônimos")
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                synonyms.joinToString(", "),
+                                style      = MaterialTheme.typography.bodyMedium,
+                                color      = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                                lineHeight = 20.sp,
+                            )
+                            Spacer(Modifier.height(24.dp))
+                        }
+                    }
+                }
+
                 item { Spacer(Modifier.height(80.dp)) }
             }
 
@@ -827,6 +826,15 @@ private fun MangaInfoRow(label: String, value: String) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
         Text(value, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+    }
+}
+
+@Composable
+private fun MangaInfoCard(label: String, value: String) {
+    Card(shape = RoundedCornerShape(12.dp)) {
+        Box(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+            MangaInfoRow(label, value)
+        }
     }
 }
 
