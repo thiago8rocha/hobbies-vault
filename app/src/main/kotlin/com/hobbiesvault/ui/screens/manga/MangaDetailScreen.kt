@@ -42,6 +42,8 @@ import com.hobbiesvault.model.MediaItem
 import com.hobbiesvault.model.MediaStatus
 import com.hobbiesvault.service.MediaCacheService
 import com.hobbiesvault.ui.components.NotesDialog
+import com.hobbiesvault.ui.components.StarRatingDisplay
+import com.hobbiesvault.ui.components.StarRatingPicker
 import com.hobbiesvault.ui.theme.ColorManga
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -774,36 +776,6 @@ fun MangaDetailScreen(
 }
 
 // ── Sub-composables ────────────────────────────────────────────────────────────
-
-@Composable
-private fun StarRatingPicker(rating: Int, onRatingChange: (Int) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        (1..5).forEach { star ->
-            Icon(
-                if (star <= rating) Icons.Default.Star else Icons.Default.StarBorder,
-                contentDescription = null,
-                tint     = Color(0xFFFFC107),
-                modifier = Modifier
-                    .size(28.dp)
-                    .clickable { onRatingChange(star) },
-            )
-        }
-    }
-}
-
-@Composable
-private fun StarRatingDisplay(rating: Int) {
-    Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-        (1..5).forEach { star ->
-            Icon(
-                if (star <= rating) Icons.Default.Star else Icons.Default.StarBorder,
-                contentDescription = null,
-                tint     = Color(0xFFFFC107),
-                modifier = Modifier.size(18.dp),
-            )
-        }
-    }
-}
 
 fun mangaStatusLabel(status: MediaStatus): String = when (status) {
     MediaStatus.QUEUED  -> "Quero Ler"

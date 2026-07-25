@@ -15,6 +15,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BrokenImage
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -105,6 +107,37 @@ fun OverflowMenuItem(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 )
             }
+        }
+    }
+}
+
+// ── Avaliação por estrelas (0 a 5) ──────────────────────────────────────────
+@Composable
+fun StarRatingPicker(rating: Int, onRatingChange: (Int) -> Unit) {
+    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        (1..5).forEach { star ->
+            Icon(
+                if (star <= rating) Icons.Default.Star else Icons.Default.StarBorder,
+                contentDescription = null,
+                tint     = Color(0xFFFFC107),
+                modifier = Modifier
+                    .size(28.dp)
+                    .clickable { onRatingChange(star) },
+            )
+        }
+    }
+}
+
+@Composable
+fun StarRatingDisplay(rating: Int) {
+    Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+        (1..5).forEach { star ->
+            Icon(
+                if (star <= rating) Icons.Default.Star else Icons.Default.StarBorder,
+                contentDescription = null,
+                tint     = Color(0xFFFFC107),
+                modifier = Modifier.size(18.dp),
+            )
         }
     }
 }
