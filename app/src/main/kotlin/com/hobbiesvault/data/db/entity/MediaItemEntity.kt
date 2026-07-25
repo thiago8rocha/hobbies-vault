@@ -43,6 +43,7 @@ data class MediaItemEntity(
     @ColumnInfo(name = "data_conclusao_historia_ms") val historyCompletionDateMs: Long? = null,
     @ColumnInfo(name = "data_conclusao_extras_ms")   val extrasCompletionDateMs: Long? = null,
     @ColumnInfo(name = "data_conclusao_platina_ms")  val platinumCompletionDateMs: Long? = null,
+    @ColumnInfo(name = "anotacoes_pessoais")         val personalNotes: String? = null,
 ) {
     fun toDomain() = MediaItem(
         id                  = id,
@@ -77,6 +78,7 @@ data class MediaItemEntity(
         historyCompletionDate   = historyCompletionDateMs?.let { Date(it) },
         extrasCompletionDate    = extrasCompletionDateMs?.let { Date(it) },
         platinumCompletionDate  = platinumCompletionDateMs?.let { Date(it) },
+        personalNotes           = personalNotes,
     )
 
     companion object {
@@ -113,6 +115,7 @@ data class MediaItemEntity(
             historyCompletionDateMs  = item.historyCompletionDate?.time,
             extrasCompletionDateMs   = item.extrasCompletionDate?.time,
             platinumCompletionDateMs = item.platinumCompletionDate?.time,
+            personalNotes            = item.personalNotes,
         )
     }
 }

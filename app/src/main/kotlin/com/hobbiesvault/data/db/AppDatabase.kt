@@ -17,7 +17,7 @@ import com.hobbiesvault.data.db.entity.*
         GameCacheEntity::class,
         MangaReviewEntity::class,
     ],
-    version = 11,
+    version = 12,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -29,6 +29,13 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun mangaReviewDao(): MangaReviewDao
 
     companion object {
+        val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Anotações livres do usuário — independentes da resenha de mangá/comentários de
+                // leitura de livro, disponíveis em qualquer tipo de mídia via o menu "...".
+                db.execSQL("ALTER TABLE media_items ADD COLUMN anotacoes_pessoais TEXT")
+            }
+        }
         val MIGRATION_10_11 = object : Migration(10, 11) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE media_items ADD COLUMN titulo_resenha TEXT")

@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -106,6 +107,38 @@ fun OverflowMenuItem(
             }
         }
     }
+}
+
+// ── Notas pessoais ──────────────────────────────────────────────────────────
+// Anotação livre de texto, disponível via o menu "..." em qualquer tela de detalhe,
+// independente de resenha (mangá) ou comentários de leitura (livro).
+@Composable
+fun NotesDialog(
+    initialText: String,
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit,
+) {
+    var text by remember { mutableStateOf(initialText) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title   = { Text("Notas") },
+        text    = {
+            OutlinedTextField(
+                value         = text,
+                onValueChange = { text = it },
+                placeholder   = { Text("Escreva uma anotação livre sobre este item...") },
+                minLines      = 5,
+                maxLines      = 10,
+                modifier      = Modifier.fillMaxWidth(),
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { onSave(text); onDismiss() }) { Text("Salvar") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancelar") }
+        },
+    )
 }
 
 // ── Proportional Tab Row ──────────────────────────────────────────────────────
