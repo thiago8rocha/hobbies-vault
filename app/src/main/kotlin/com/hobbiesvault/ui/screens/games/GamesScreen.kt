@@ -352,7 +352,7 @@ private fun GameCard(
                         console.label,
                         fontSize   = 8.sp,
                         fontWeight = FontWeight.Bold,
-                        color      = console.color,
+                        color      = Color.White,
                     )
                 }
             }

@@ -120,7 +120,7 @@ fun ProportionalTabRow(
 ) {
     val density     = LocalDensity.current
     val textMeasurer = rememberTextMeasurer()
-    val boldStyle   = remember { TextStyle(fontSize = 12.sp, fontWeight = FontWeight.SemiBold) }
+    val boldStyle   = remember { TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold) }
     val unselColor  = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
 
     val screenWidthPx = with(density) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
@@ -151,7 +151,7 @@ fun ProportionalTabRow(
                 ) {
                     Text(
                         label,
-                        fontSize   = 12.sp,
+                        fontSize   = 14.sp,
                         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                         color      = if (selected) selectedColor else unselColor,
                     )
