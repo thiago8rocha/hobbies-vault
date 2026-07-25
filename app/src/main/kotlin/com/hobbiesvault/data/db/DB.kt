@@ -22,12 +22,13 @@ object DB {
                 AppDatabase.MIGRATION_9_10,
                 AppDatabase.MIGRATION_10_11,
                 AppDatabase.MIGRATION_11_12,
+                AppDatabase.MIGRATION_12_13,
             )
             .build()
     }
 
     val database get() = _db
-    val repo     get() = MediaRepository(_db.mediaItemDao(), _db.movieListDao(), _db.seriesEpisodeDao(), _db.mangaReviewDao())
+    val repo     get() = MediaRepository(_db.mediaItemDao(), _db.movieListDao(), _db.seriesEpisodeDao(), _db.mangaReviewDao(), _db.bookQuoteDao())
     val cache    get() = MediaCacheRepository(_db.mediaDetailsCacheDao())
     val games    get() = _db.gameCacheDao()
 }

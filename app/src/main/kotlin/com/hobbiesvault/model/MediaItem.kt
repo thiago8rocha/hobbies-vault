@@ -30,6 +30,8 @@ data class MediaItem(
     val notes: String? = null,
     /** Anotação livre do usuário, independente de resenha/comentários — editável via o menu "...". */
     val personalNotes: String? = null,
+    /** Resenha do livro — separada do log de comentários de leitura (`notes`). */
+    val bookReviewText: String? = null,
     val coverUrl: String? = null,
     val completionDate: Date? = null,
     val addedDate: Date = Date(),

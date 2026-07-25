@@ -1,14 +1,17 @@
 ﻿package com.hobbiesvault.data.repository
 
+import com.hobbiesvault.data.db.dao.BookQuoteDao
 import com.hobbiesvault.data.db.dao.MovieListDao
 import com.hobbiesvault.data.db.dao.MediaItemDao
 import com.hobbiesvault.data.db.dao.MangaReviewDao
 import com.hobbiesvault.data.db.dao.SeriesEpisodeDao
+import com.hobbiesvault.data.db.entity.BookQuoteEntity
 import com.hobbiesvault.data.db.entity.MovieListEntity
 import com.hobbiesvault.data.db.entity.MovieListItemEntity
 import com.hobbiesvault.data.db.entity.MediaItemEntity
 import com.hobbiesvault.data.db.entity.MangaReviewEntity
 import com.hobbiesvault.data.db.entity.SeriesEpisodeEntity
+import com.hobbiesvault.model.BookQuote
 import com.hobbiesvault.model.MangaReview
 import com.hobbiesvault.model.MediaItem
 import com.hobbiesvault.model.MediaType
@@ -21,6 +24,7 @@ class MediaRepository(
     private val listDao: MovieListDao,
     private val episodeDao: SeriesEpisodeDao,
     private val mangaReviewDao: MangaReviewDao,
+    private val bookQuoteDao: BookQuoteDao,
 ) {
     // ── MediaItems ─────────────────────────────────────────────────────────────
 
@@ -141,4 +145,21 @@ class MediaRepository(
                 completedAtMs = completedAt.time,
             )
         )
+
+    // ── Book quotes ────────────────────────────────────────────────────────────
+
+    fun watchBookQuotes(mediaItemId: Int): Flow<List<BookQuote>> =
+        bookQuoteDao.watchByItem(mediaItemId).map { list -> list.map { it.toDomain() } }
+
+    suspend fun addBookQuote(mediaItemId: Int, quote: String, comment: String?) =
+        bookQuoteDao.insert(
+            BookQuoteEntity(
+                mediaItemId = mediaItemId,
+                quote       = quote,
+                comment     = comment,
+                createdAtMs = Date().time,
+            )
+        )
+
+    suspend fun deleteBookQuote(id: Int) = bookQuoteDao.delete(id)
 }
