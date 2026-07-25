@@ -6,9 +6,11 @@ concurrency:
 
 on:
   pull_request:
-    paths:
-      - "**"
-      - "!**.md"
+    paths-ignore:
+      - "**.md"
+      - ".github/ISSUE_TEMPLATE/**"
+      - ".github/PULL_REQUEST_TEMPLATE.md"
+      - "LICENSE"
 
 permissions:
   checks: write
