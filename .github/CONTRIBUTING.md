@@ -77,15 +77,15 @@ See the PR template for the checklist. Keep PRs focused — one logical change p
 
 ## Releases
 
-There's only one branch, `main` — pull requests merge straight into it. Releases (stable, beta
+There's only one branch, `master` — pull requests merge straight into it. Releases (stable, beta
 and nightly) are cut by the `Build app` GitHub Actions workflow:
 
-- Every push to `main` automatically builds and publishes a **nightly** prerelease, tagged `rN`
+- Every push to `master` automatically builds and publishes a **nightly** prerelease, tagged `rN`
   where `N` is the total commit count at build time. Nightly is a build channel, not a branch —
-  it's just what every commit on `main` gets, for testing on a real device without waiting for a
+  it's just what every commit on `master` gets, for testing on a real device without waiting for a
   proper release.
 - **Stable** and **beta** releases are cut manually by dispatching the same workflow
-  (`workflow_dispatch`) with a version number, from `main`. Version numbers follow
+  (`workflow_dispatch`) with a version number, from `master`. Version numbers follow
   [SemVer](https://semver.org/) (`MAJOR.MINOR.PATCH`), with betas suffixed `-bN`.
 
 See [`CHANGELOG.md`](../CHANGELOG.md) for what belongs in the `Unreleased`/versioned sections that

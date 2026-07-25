@@ -39,7 +39,7 @@ android {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
-        // Build de pré-lançamento gerado a cada push em main pelo CI (workflow build_push.yml).
+        // Build de pré-lançamento gerado a cada push em master pelo CI (workflow build_push.yml).
         // Assinada com a chave de debug (sem depender de secrets) e instalável lado a lado com
         // a versão estável graças ao applicationIdSuffix.
         create("nightly") {

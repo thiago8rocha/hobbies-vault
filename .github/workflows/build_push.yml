@@ -5,7 +5,7 @@ run-name: ${{ github.event_name == 'workflow_dispatch' && format('Build and Rele
 on:
   push:
     branches:
-      - main
+      - master
     paths-ignore:
       - "**.md"
       - ".github/ISSUE_TEMPLATE/**"
@@ -104,7 +104,7 @@ jobs:
 
       # NIGHTLY
       - name: Prepare nightly build
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: |
           echo "VERSION_TAG=r$(git rev-list --count HEAD)" >> $GITHUB_ENV
           echo "BUILD_TYPE=Nightly" >> $GITHUB_ENV
