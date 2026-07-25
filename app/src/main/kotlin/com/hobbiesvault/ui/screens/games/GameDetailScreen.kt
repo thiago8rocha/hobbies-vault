@@ -29,12 +29,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.hobbiesvault.data.db.DB
 import com.hobbiesvault.model.GameConsole
+import com.hobbiesvault.model.GamePlaythrough
 import com.hobbiesvault.model.MediaItem
 import com.hobbiesvault.model.MediaStatus
 import com.hobbiesvault.service.ApiServices
@@ -122,6 +124,15 @@ class GameDetailViewModel : ViewModel() {
         viewModelScope.launch { DB.repo.update(updated) }
     }
 
+    fun savePlaythrough(playthrough: GamePlaythrough) {
+        val id = mediaItem?.id ?: return
+        viewModelScope.launch { DB.repo.savePlaythrough(id, playthrough) }
+    }
+
+    fun deletePlaythrough(id: Int) {
+        viewModelScope.launch { DB.repo.deletePlaythrough(id) }
+    }
+
     fun refreshCache() {
         val current = mediaItem ?: return
         viewModelScope.launch {
@@ -161,6 +172,12 @@ fun GameDetailScreen(
     var showConsoleMenu  by remember { mutableStateOf(false) }
     var showNotes        by remember { mutableStateOf(false) }
     var synopsisExpanded by remember { mutableStateOf(false) }
+    var showAddPlaythrough by remember { mutableStateOf(false) }
+    var editingPlaythrough by remember { mutableStateOf<GamePlaythrough?>(null) }
+
+    val playthroughs by remember(mediaItem.id) {
+        mediaItem.id?.let { DB.repo.watchPlaythroughs(it) } ?: kotlinx.coroutines.flow.flowOf(emptyList())
+    }.collectAsStateWithLifecycle(initialValue = emptyList())
 
     val artworkUrl   = cache?.get("artworkUrl") as? String
     val coverUrl     = cache?.get("coverUrl") as? String ?: mediaItem.coverUrl
@@ -479,6 +496,46 @@ fun GameDetailScreen(
                     }
                 }
 
+                // ── Jogatinas ─────────────────────────────────────────────────
+                item {
+                    Column(contentPad) {
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment     = Alignment.CenterVertically,
+                        ) {
+                            GameSectionTitle("Jogatinas")
+                            IconButton(
+                                onClick  = { editingPlaythrough = null; showAddPlaythrough = true },
+                                modifier = Modifier.size(32.dp),
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = "Nova jogatina", tint = platformColor, modifier = Modifier.size(20.dp))
+                            }
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        if (playthroughs.isEmpty()) {
+                            Text(
+                                "Nenhuma jogatina registrada ainda",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                            )
+                        } else {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                playthroughs.forEach { pt ->
+                                    PlaythroughTile(
+                                        playthrough = pt,
+                                        dateFormatter = dateFormatter,
+                                        color = platformColor,
+                                        onClick = { editingPlaythrough = pt; showAddPlaythrough = true },
+                                        onDelete = { vm.deletePlaythrough(pt.id) },
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(Modifier.height(24.dp))
+                    }
+                }
+
                 // ── Preços (IsThereAnyDeal) ────────────────────────────────────
                 if (vm.itadDeals.isNotEmpty()) {
                     item {
@@ -602,6 +659,15 @@ fun GameDetailScreen(
         )
     }
 
+    if (showAddPlaythrough) {
+        AddPlaythroughDialog(
+            initial   = editingPlaythrough,
+            color     = platformColor,
+            onDismiss = { showAddPlaythrough = false },
+            onSave    = { vm.savePlaythrough(it); showAddPlaythrough = false },
+        )
+    }
+
     if (showDelete) {
         AlertDialog(
             onDismissRequest = { showDelete = false },
@@ -683,6 +749,120 @@ private fun PlatformTag(label: String, highlighted: Boolean, color: Color) {
             )
         }
     }
+}
+
+@Composable
+private fun PlaythroughTile(
+    playthrough: GamePlaythrough,
+    dateFormatter: SimpleDateFormat,
+    color: Color,
+    onClick: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        shape    = RoundedCornerShape(12.dp),
+        color    = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+    ) {
+        Row(
+            Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.Top,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(playthrough.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                val range = listOfNotNull(
+                    playthrough.startDate?.let { dateFormatter.format(it) },
+                    playthrough.endDate?.let { dateFormatter.format(it) },
+                ).joinToString(" – ")
+                val details = listOfNotNull(
+                    range.ifEmpty { null },
+                    playthrough.hoursPlayed?.let { "${it}h" },
+                ).joinToString(" · ")
+                if (details.isNotEmpty()) {
+                    Text(details, style = MaterialTheme.typography.bodySmall, color = color)
+                }
+                if (!playthrough.notes.isNullOrBlank()) {
+                    Text(
+                        playthrough.notes,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    )
+                }
+            }
+            IconButton(onClick = onDelete, modifier = Modifier.size(24.dp)) {
+                Icon(Icons.Default.Close, contentDescription = "Remover", modifier = Modifier.size(16.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddPlaythroughDialog(
+    initial: GamePlaythrough?,
+    color: Color,
+    onDismiss: () -> Unit,
+    onSave: (GamePlaythrough) -> Unit,
+) {
+    val fmt = remember { SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")) }
+    var title    by remember { mutableStateOf(initial?.title ?: "") }
+    var startStr by remember { mutableStateOf(initial?.startDate?.let { fmt.format(it) } ?: "") }
+    var endStr   by remember { mutableStateOf(initial?.endDate?.let { fmt.format(it) } ?: "") }
+    var hoursStr by remember { mutableStateOf(initial?.hoursPlayed?.toString() ?: "") }
+    var notes    by remember { mutableStateOf(initial?.notes ?: "") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title   = { Text(if (initial == null) "Nova jogatina" else "Editar jogatina") },
+        text    = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = title, onValueChange = { title = it },
+                    placeholder = { Text("Ex.: Primeira zerada, Speedrun...") },
+                    singleLine = true, modifier = Modifier.fillMaxWidth(),
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = startStr, onValueChange = { startStr = it },
+                        label = { Text("Início (dd/MM/aaaa)") }, singleLine = true,
+                        modifier = Modifier.weight(1f),
+                    )
+                    OutlinedTextField(
+                        value = endStr, onValueChange = { endStr = it },
+                        label = { Text("Fim (dd/MM/aaaa)") }, singleLine = true,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                OutlinedTextField(
+                    value = hoursStr, onValueChange = { hoursStr = it.filter(Char::isDigit) },
+                    label = { Text("Horas jogadas") }, singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = notes, onValueChange = { notes = it },
+                    placeholder = { Text("Notas (opcional)") }, minLines = 2, maxLines = 4,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = title.isNotBlank(),
+                onClick = {
+                    onSave(
+                        GamePlaythrough(
+                            id          = initial?.id ?: 0,
+                            title       = title.trim(),
+                            startDate   = runCatching { startStr.takeIf { it.isNotBlank() }?.let { fmt.parse(it) } }.getOrNull(),
+                            endDate     = runCatching { endStr.takeIf { it.isNotBlank() }?.let { fmt.parse(it) } }.getOrNull(),
+                            hoursPlayed = hoursStr.toIntOrNull(),
+                            notes       = notes.trim().ifBlank { null },
+                        )
+                    )
+                },
+            ) { Text("Salvar") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
+    )
 }
 
 @Composable
