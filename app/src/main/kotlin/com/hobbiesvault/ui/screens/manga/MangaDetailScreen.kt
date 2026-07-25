@@ -23,6 +23,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -393,11 +394,11 @@ fun MangaDetailScreen(
                             verticalAlignment     = Alignment.CenterVertically,
                         ) {
                             MangaSectionTitle("Progresso")
-                            TextButton(
-                                onClick        = { chapterInput = (mediaItem.currentProgress ?: 0).toString(); showChapterDialog = true },
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                            IconButton(
+                                onClick  = { chapterInput = (mediaItem.currentProgress ?: 0).toString(); showChapterDialog = true },
+                                modifier = Modifier.size(32.dp),
                             ) {
-                                Text("Editar", color = ColorManga, fontSize = 12.sp)
+                                Icon(Icons.Default.Edit, contentDescription = "Editar", tint = ColorManga, modifier = Modifier.size(18.dp))
                             }
                         }
                         val displayedProgress = (mediaItem.currentProgress ?: 0).let { p ->
@@ -409,6 +410,7 @@ fun MangaDetailScreen(
                                 modifier   = Modifier.fillMaxWidth(),
                                 color      = ColorManga,
                                 trackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                                strokeCap  = StrokeCap.Butt,
                             )
                         }
                         Text(

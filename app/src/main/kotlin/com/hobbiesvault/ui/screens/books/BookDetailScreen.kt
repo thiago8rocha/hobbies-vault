@@ -21,6 +21,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -382,12 +383,12 @@ fun BookDetailScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment     = Alignment.CenterVertically,
                     ) {
-                        Text("Progresso", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                        TextButton(
-                            onClick        = { pageInput = (mediaItem.currentProgress ?: 0).toString(); commentInput = ""; showPageDialog = true },
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                        Text("Histórico de Leitura", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                        IconButton(
+                            onClick  = { pageInput = (mediaItem.currentProgress ?: 0).toString(); commentInput = ""; showPageDialog = true },
+                            modifier = Modifier.size(32.dp),
                         ) {
-                            Text("Editar", color = ColorLivro, fontSize = 12.sp)
+                            Icon(Icons.Default.Edit, contentDescription = "Editar", tint = ColorLivro, modifier = Modifier.size(18.dp))
                         }
                     }
                     Spacer(Modifier.height(10.dp))
@@ -402,6 +403,7 @@ fun BookDetailScreen(
                                     modifier   = Modifier.fillMaxWidth(),
                                     color      = ColorLivro,
                                     trackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                                    strokeCap  = StrokeCap.Butt,
                                 )
                             }
                             val pctSuffix = if (pages != null && pages > 0) {

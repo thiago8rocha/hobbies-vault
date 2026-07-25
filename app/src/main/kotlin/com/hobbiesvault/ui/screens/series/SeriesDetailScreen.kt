@@ -22,6 +22,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -676,6 +677,7 @@ private fun SeasonCard(
                             modifier   = Modifier.fillMaxWidth(),
                             color      = ColorSerie,
                             trackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                            strokeCap  = StrokeCap.Butt,
                         )
                         Text("$watchedCount/$totalEps", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                     }
