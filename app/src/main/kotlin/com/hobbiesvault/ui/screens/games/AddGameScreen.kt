@@ -52,6 +52,10 @@ class AddGameViewModel : ViewModel() {
         }
     }
 
+    fun clear() {
+        _results.value = emptyList()
+    }
+
     fun add(result: ApiSearchResult, console: GameConsole, status: MediaStatus, onDone: () -> Unit) {
         viewModelScope.launch {
             // "Aguardando Lançamento" não é uma opção escolhível — o jogo cai nela
@@ -99,7 +103,13 @@ fun AddGameScreen(navController: NavController, vm: AddGameViewModel = viewModel
                 value         = query,
                 onValueChange = { query = it },
                 label         = { Text("Buscar jogo...") },
-                trailingIcon  = { IconButton(onClick = { vm.search(query) }) { Icon(Icons.Default.Search, null) } },
+                trailingIcon  = {
+                    if (query.isNotEmpty()) {
+                        IconButton(onClick = { query = ""; vm.clear() }) { Icon(Icons.Default.Clear, null) }
+                    } else {
+                        IconButton(onClick = { vm.search(query) }) { Icon(Icons.Default.Search, null) }
+                    }
+                },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { vm.search(query) }),
                 singleLine    = true,

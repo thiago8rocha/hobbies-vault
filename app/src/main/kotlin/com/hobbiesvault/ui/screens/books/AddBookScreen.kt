@@ -49,6 +49,10 @@ class AddBookViewModel : ViewModel() {
         }
     }
 
+    fun clear() {
+        _results.value = emptyList()
+    }
+
     fun add(result: ApiSearchResult, status: MediaStatus, onDone: () -> Unit) {
         viewModelScope.launch {
             val item = MediaItem(
@@ -82,7 +86,13 @@ fun AddBookScreen(navController: NavController, vm: AddBookViewModel = viewModel
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             OutlinedTextField(value = query, onValueChange = { query = it }, label = { Text("Título, autor ou editora...") },
-                trailingIcon = { IconButton(onClick = { vm.search(query) }) { Icon(Icons.Default.Search, null) } },
+                trailingIcon = {
+                    if (query.isNotEmpty()) {
+                        IconButton(onClick = { query = ""; vm.clear() }) { Icon(Icons.Default.Clear, null) }
+                    } else {
+                        IconButton(onClick = { vm.search(query) }) { Icon(Icons.Default.Search, null) }
+                    }
+                },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { vm.search(query) }),
                 singleLine = true, modifier = Modifier.fillMaxWidth().padding(16.dp))
