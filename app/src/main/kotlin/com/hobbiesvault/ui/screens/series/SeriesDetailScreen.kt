@@ -7,6 +7,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -240,8 +242,7 @@ fun SeriesDetailScreen(
     var showStatusMenu   by remember { mutableStateOf(false) }
     var synopsisExpanded by remember { mutableStateOf(false) }
     var synopsisOverflows by remember { mutableStateOf(false) }
-    var showCast         by remember { mutableStateOf(false) }
-    var showCrew         by remember { mutableStateOf(false) }
+    var showRelated      by remember { mutableStateOf(true) }
 
     val synopsis      = cache?.get("synopsis") as? String
     val posterUrl     = cache?.get("posterUrl") as? String ?: mediaItem.coverUrl
@@ -362,6 +363,11 @@ fun SeriesDetailScreen(
                                     leadingIcon = { Icon(if (mediaItem.favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder, null) },
                                     onClick = { vm.toggleFavorite(); showMoreMenu = false },
                                 )
+                                DropdownMenuItem(
+                                    text = { Text(if (showRelated) "Ocultar relacionadas" else "Mostrar relacionadas") },
+                                    leadingIcon = { Icon(if (showRelated) Icons.Default.VisibilityOff else Icons.Default.Visibility, null) },
+                                    onClick = { showRelated = !showRelated; showMoreMenu = false },
+                                )
                                 HorizontalDivider()
                                 DropdownMenuItem(
                                     text = { Text("Remover série", color = MaterialTheme.colorScheme.error) },
@@ -441,6 +447,31 @@ fun SeriesDetailScreen(
                     }
                 }
 
+                // ── Onde Assistir ────────────────────────────────────────────────
+                if (!providers.isNullOrEmpty()) {
+                    item {
+                        Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                            SeriesSectionTitle("Onde Assistir")
+                            Spacer(Modifier.height(10.dp))
+                            if (providers.size > 2) {
+                                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    providers.chunked(2).forEach { row ->
+                                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                            row.forEach { p -> SeriesProviderRow(p, modifier = Modifier.weight(1f)) }
+                                            if (row.size == 1) Spacer(Modifier.weight(1f))
+                                        }
+                                    }
+                                }
+                            } else {
+                                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    providers.forEach { p -> SeriesProviderRow(p) }
+                                }
+                            }
+                            Spacer(Modifier.height(24.dp))
+                        }
+                    }
+                }
+
                 // ── Temporadas ──────────────────────────────────────────────────
                 if (!seasons.isNullOrEmpty()) {
                     item {
@@ -478,16 +509,11 @@ fun SeriesDetailScreen(
                     item {
                         Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                             SeriesSectionTitle("Elenco")
-                            Spacer(Modifier.height(10.dp))
-                            (if (showCast) cast else cast.take(5)).forEach { p ->
-                                SeriesPersonRow(p["name"] as? String ?: "", p["character"] as? String ?: "", p["photoUrl"] as? String)
-                            }
-                            if (cast.size > 5) {
-                                Text(
-                                    if (showCast) "Ver menos" else "Ver todos (${cast.size})",
-                                    color = ColorSerie, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
-                                    modifier = Modifier.clickable { showCast = !showCast }.padding(top = 2.dp, bottom = 4.dp),
-                                )
+                            Spacer(Modifier.height(12.dp))
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                items(cast) { p ->
+                                    SeriesPersonRow(p["name"] as? String ?: "", p["character"] as? String ?: "", p["photoUrl"] as? String)
+                                }
                             }
                         }
                     }
@@ -498,47 +524,18 @@ fun SeriesDetailScreen(
                     item {
                         Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                             SeriesSectionTitle("Equipe Técnica")
-                            Spacer(Modifier.height(10.dp))
-                            (if (showCrew) crew else crew.take(5)).forEach { p ->
-                                SeriesPersonRow(p["name"] as? String ?: "", p["role"] as? String ?: "", p["photoUrl"] as? String)
-                            }
-                            if (crew.size > 5) {
-                                Text(
-                                    if (showCrew) "Ver menos" else "Ver todos (${crew.size})",
-                                    color = ColorSerie, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
-                                    modifier = Modifier.clickable { showCrew = !showCrew }.padding(top = 2.dp, bottom = 4.dp),
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // ── Onde Assistir ────────────────────────────────────────────────
-                if (!providers.isNullOrEmpty()) {
-                    item {
-                        Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                            SeriesSectionTitle("Onde Assistir")
-                            Spacer(Modifier.height(10.dp))
-                            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                providers.forEach { p ->
-                                    val name    = p["name"] as? String ?: ""
-                                    val logoUrl = p["logoUrl"] as? String
-                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        if (logoUrl != null) {
-                                            AsyncImage(model = logoUrl, contentDescription = name, contentScale = ContentScale.Crop,
-                                                modifier = Modifier.size(36.dp).clip(RoundedCornerShape(6.dp)))
-                                        }
-                                        Text(name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                                    }
+                            Spacer(Modifier.height(12.dp))
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                items(crew) { p ->
+                                    SeriesPersonRow(p["name"] as? String ?: "", p["role"] as? String ?: "", p["photoUrl"] as? String)
                                 }
                             }
-                            Spacer(Modifier.height(24.dp))
                         }
                     }
                 }
 
                 // ── Séries relacionadas ──────────────────────────────────────────
-                if (!related.isNullOrEmpty()) {
+                if (showRelated && !related.isNullOrEmpty()) {
                     item {
                         Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                             SeriesSectionTitle("Séries relacionadas")
@@ -615,6 +612,19 @@ fun SeriesDetailScreen(
 private fun SeriesSectionTitle(text: String, modifier: Modifier = Modifier) {
     Text(text, modifier = modifier, style = MaterialTheme.typography.titleSmall,
         fontWeight = FontWeight.Bold, letterSpacing = 0.3.sp)
+}
+
+@Composable
+private fun SeriesProviderRow(p: Map<String, Any?>, modifier: Modifier = Modifier) {
+    val name    = p["name"] as? String ?: ""
+    val logoUrl = p["logoUrl"] as? String
+    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (logoUrl != null) {
+            AsyncImage(model = logoUrl, contentDescription = name, contentScale = ContentScale.Crop,
+                modifier = Modifier.size(36.dp).clip(RoundedCornerShape(6.dp)))
+        }
+        Text(name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+    }
 }
 
 @Composable
@@ -748,27 +758,25 @@ private fun SeasonCard(
 
 @Composable
 private fun SeriesPersonRow(name: String, sub: String, photoUrl: String?) {
-    Row(
-        Modifier.fillMaxWidth().padding(bottom = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.width(72.dp),
     ) {
         Box(
-            Modifier.size(40.dp).clip(CircleShape).background(ColorSerie.copy(alpha = 0.12f)),
+            Modifier.size(64.dp).clip(CircleShape).background(ColorSerie.copy(alpha = 0.12f)),
             contentAlignment = Alignment.Center,
         ) {
             if (photoUrl != null) {
                 AsyncImage(model = photoUrl, contentDescription = name, contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize().clip(CircleShape))
             } else {
-                Icon(Icons.Default.Person, null, modifier = Modifier.size(20.dp), tint = Color.White.copy(alpha = 0.38f))
+                Icon(Icons.Default.Person, null, modifier = Modifier.size(28.dp), tint = Color.White.copy(alpha = 0.38f))
             }
         }
-        Column {
-            Text(name, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
-            if (sub.isNotBlank()) {
-                Text(sub, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f), fontSize = 11.sp)
-            }
+        Spacer(Modifier.height(4.dp))
+        Text(name, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        if (sub.isNotBlank()) {
+            Text(sub, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
