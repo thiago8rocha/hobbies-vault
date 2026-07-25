@@ -454,6 +454,24 @@ fun GameDetailScreen(
                     }
                 }
 
+                // ── Preços (IsThereAnyDeal) ────────────────────────────────────
+                if (vm.itadDeals.isNotEmpty()) {
+                    item {
+                        Column(contentPad) {
+                            Row(verticalAlignment = Alignment.Bottom) {
+                                GameSectionTitle("Preços")
+                                Spacer(Modifier.width(6.dp))
+                                Text("IsThereAnyDeal", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                            }
+                            Spacer(Modifier.height(10.dp))
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                vm.itadDeals.sortedBy { it.price }.forEach { deal -> PriceDealTile(deal, platformColor) }
+                            }
+                            Spacer(Modifier.height(24.dp))
+                        }
+                    }
+                }
+
                 // ── Conquistas / Troféus ──────────────────────────────────────
                 val showAchievements = mediaItem.achievementsUnlocked != null || mediaItem.totalAchievements != null || mediaItem.hasTrophies
                 if (showAchievements) {
@@ -619,6 +637,44 @@ private fun PlatformTag(label: String, highlighted: Boolean, color: Color) {
                 color      = if (highlighted) color else MaterialTheme.colorScheme.onSurface,
                 modifier   = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
             )
+        }
+    }
+}
+
+@Composable
+private fun PriceDealTile(deal: ItadDeal, color: Color) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                if (deal.url.isNotBlank()) {
+                    runCatching {
+                        context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(deal.url)))
+                    }
+                }
+            },
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+    ) {
+        Row(
+            Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(deal.store, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+            if (deal.discount > 0) {
+                Surface(color = color.copy(alpha = 0.15f), shape = RoundedCornerShape(6.dp)) {
+                    Text(
+                        "-${deal.discount}%",
+                        color = color,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                    )
+                }
+                Spacer(Modifier.width(8.dp))
+            }
+            Text("R$ %.2f".format(deal.price), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = color)
         }
     }
 }
