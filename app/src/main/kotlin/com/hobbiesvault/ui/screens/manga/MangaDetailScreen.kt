@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -39,6 +40,7 @@ import com.hobbiesvault.model.MangaReview
 import com.hobbiesvault.model.MediaItem
 import com.hobbiesvault.model.MediaStatus
 import com.hobbiesvault.service.MediaCacheService
+import com.hobbiesvault.ui.components.NotesDialog
 import com.hobbiesvault.ui.theme.ColorManga
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -114,6 +116,13 @@ class MangaDetailViewModel : ViewModel() {
         viewModelScope.launch { DB.repo.update(updated) }
     }
 
+    fun setPersonalNotes(text: String) {
+        val current = mediaItem ?: return
+        val updated = current.copy(personalNotes = text.ifBlank { null })
+        mediaItem = updated
+        viewModelScope.launch { DB.repo.update(updated) }
+    }
+
     fun refreshCache() {
         val current = mediaItem ?: return
         viewModelScope.launch {
@@ -157,6 +166,7 @@ fun MangaDetailScreen(
     var showDelete       by remember { mutableStateOf(false) }
     var showStatusMenu   by remember { mutableStateOf(false) }
     var showMoreMenu     by remember { mutableStateOf(false) }
+    var showPersonalNotes by remember { mutableStateOf(false) }
     var synopsisExpanded by remember { mutableStateOf(false) }
     var showChapterDialog by remember { mutableStateOf(false) }
     var chapterInput     by remember { mutableStateOf("") }
@@ -304,6 +314,11 @@ fun MangaDetailScreen(
                                     text          = { Text("Editar progresso") },
                                     leadingIcon   = { Icon(Icons.Default.Bookmark, null) },
                                     onClick       = { chapterInput = (mediaItem.currentProgress ?: 0).toString(); showChapterDialog = true; showMoreMenu = false },
+                                )
+                                DropdownMenuItem(
+                                    text          = { Text("Notas") },
+                                    leadingIcon   = { Icon(Icons.AutoMirrored.Filled.Notes, null) },
+                                    onClick       = { showPersonalNotes = true; showMoreMenu = false },
                                 )
                                 DropdownMenuItem(
                                     text          = { Text(if (mediaItem.favorite) "Remover dos favoritos" else "Favoritar") },
@@ -726,6 +741,14 @@ fun MangaDetailScreen(
                 ) { Text("Salvar") }
             },
             dismissButton = { TextButton(onClick = { showChapterDialog = false }) { Text("Cancelar") } },
+        )
+    }
+
+    if (showPersonalNotes) {
+        NotesDialog(
+            initialText = mediaItem.personalNotes ?: "",
+            onDismiss   = { showPersonalNotes = false },
+            onSave      = { vm.setPersonalNotes(it) },
         )
     }
 

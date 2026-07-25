@@ -14,6 +14,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.*
@@ -38,6 +39,7 @@ import com.hobbiesvault.model.MediaItem
 import com.hobbiesvault.model.MediaStatus
 import com.hobbiesvault.service.ApiServices
 import com.hobbiesvault.service.MediaCacheService
+import com.hobbiesvault.ui.components.NotesDialog
 import com.hobbiesvault.ui.theme.ColorSerie
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -169,6 +171,13 @@ class SeriesDetailViewModel : ViewModel() {
         viewModelScope.launch { DB.repo.update(updated) }
     }
 
+    fun setNotes(text: String) {
+        val current = mediaItem ?: return
+        val updated = current.copy(personalNotes = text.ifBlank { null })
+        mediaItem = updated
+        viewModelScope.launch { DB.repo.update(updated) }
+    }
+
     fun refreshCache() {
         val current = mediaItem ?: return
         viewModelScope.launch {
@@ -226,6 +235,7 @@ fun SeriesDetailScreen(
 
     var showDelete       by remember { mutableStateOf(false) }
     var showMoreMenu     by remember { mutableStateOf(false) }
+    var showNotes        by remember { mutableStateOf(false) }
     var showStatusMenu   by remember { mutableStateOf(false) }
     var synopsisExpanded by remember { mutableStateOf(false) }
     var synopsisOverflows by remember { mutableStateOf(false) }
@@ -336,6 +346,11 @@ fun SeriesDetailScreen(
                                     text = { Text("Atualizar") },
                                     leadingIcon = { Icon(Icons.Default.Refresh, null) },
                                     onClick = { vm.refreshCache(); showMoreMenu = false },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Notas") },
+                                    leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, null) },
+                                    onClick = { showNotes = true; showMoreMenu = false },
                                 )
                                 DropdownMenuItem(
                                     text = { Text(if (mediaItem.favorite) "Remover dos favoritos" else "Favoritar") },
@@ -563,6 +578,14 @@ fun SeriesDetailScreen(
                 }
             }
         }
+    }
+
+    if (showNotes) {
+        NotesDialog(
+            initialText = mediaItem.personalNotes ?: "",
+            onDismiss   = { showNotes = false },
+            onSave      = { vm.setNotes(it) },
+        )
     }
 
     if (showDelete) {

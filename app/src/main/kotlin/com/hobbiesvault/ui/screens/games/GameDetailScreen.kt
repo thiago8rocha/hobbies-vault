@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -38,6 +39,7 @@ import com.hobbiesvault.service.ApiServices
 import com.hobbiesvault.service.HltbResult
 import com.hobbiesvault.service.ItadDeal
 import com.hobbiesvault.service.MediaCacheService
+import com.hobbiesvault.ui.components.NotesDialog
 import com.hobbiesvault.ui.theme.ColorJogo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -110,6 +112,13 @@ class GameDetailViewModel : ViewModel() {
         viewModelScope.launch { DB.repo.update(updated) }
     }
 
+    fun setNotes(text: String) {
+        val current = mediaItem ?: return
+        val updated = current.copy(personalNotes = text.ifBlank { null })
+        mediaItem = updated
+        viewModelScope.launch { DB.repo.update(updated) }
+    }
+
     fun refreshCache() {
         val current = mediaItem ?: return
         viewModelScope.launch {
@@ -147,6 +156,7 @@ fun GameDetailScreen(
     var showStatusMenu   by remember { mutableStateOf(false) }
     var showCompletedMenu by remember { mutableStateOf(false) }
     var showConsoleMenu  by remember { mutableStateOf(false) }
+    var showNotes        by remember { mutableStateOf(false) }
     var synopsisExpanded by remember { mutableStateOf(false) }
 
     val artworkUrl   = cache?.get("artworkUrl") as? String
@@ -331,6 +341,7 @@ fun GameDetailScreen(
                             }
                             DropdownMenu(expanded = showMoreMenu, onDismissRequest = { showMoreMenu = false }) {
                                 DropdownMenuItem(text = { Text("Atualizar") }, leadingIcon = { Icon(Icons.Default.Refresh, null) }, onClick = { vm.refreshCache(); showMoreMenu = false })
+                                DropdownMenuItem(text = { Text("Notas") }, leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, null) }, onClick = { showNotes = true; showMoreMenu = false })
                                 if ((platforms?.size ?: 0) > 1) {
                                     DropdownMenuItem(text = { Text("Alterar plataforma") }, leadingIcon = { Icon(Icons.Default.Devices, null) }, onClick = { showConsoleMenu = true; showMoreMenu = false })
                                 }
@@ -519,6 +530,14 @@ fun GameDetailScreen(
                 item { Spacer(Modifier.height(32.dp)) }
             }
         }
+    }
+
+    if (showNotes) {
+        NotesDialog(
+            initialText = mediaItem.personalNotes ?: "",
+            onDismiss   = { showNotes = false },
+            onSave      = { vm.setNotes(it) },
+        )
     }
 
     if (showDelete) {

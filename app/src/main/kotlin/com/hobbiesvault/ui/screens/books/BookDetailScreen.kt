@@ -14,6 +14,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -36,6 +37,7 @@ import com.hobbiesvault.data.db.DB
 import com.hobbiesvault.model.MediaItem
 import com.hobbiesvault.model.MediaStatus
 import com.hobbiesvault.service.MediaCacheService
+import com.hobbiesvault.ui.components.NotesDialog
 import com.hobbiesvault.ui.theme.ColorLivro
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -138,6 +140,13 @@ class BookDetailViewModel : ViewModel() {
         viewModelScope.launch { DB.repo.update(updated) }
     }
 
+    fun setPersonalNotes(text: String) {
+        val current = mediaItem ?: return
+        val updated = current.copy(personalNotes = text.ifBlank { null })
+        mediaItem = updated
+        viewModelScope.launch { DB.repo.update(updated) }
+    }
+
     fun refreshCache() {
         val current = mediaItem ?: return
         viewModelScope.launch {
@@ -169,6 +178,7 @@ fun BookDetailScreen(
 
     var showDelete by remember { mutableStateOf(false) }
     var showMoreMenu by remember { mutableStateOf(false) }
+    var showPersonalNotes by remember { mutableStateOf(false) }
     var showStatusMenu by remember { mutableStateOf(false) }
     var synopsisExpanded by remember { mutableStateOf(false) }
     var showPageDialog by remember { mutableStateOf(false) }
@@ -317,6 +327,7 @@ fun BookDetailScreen(
                             DropdownMenuItem(text = { Text("Editar progresso") }, leadingIcon = { Icon(Icons.Default.Bookmark, null) }, onClick = { pageInput = (mediaItem.currentProgress ?: 0).toString(); commentInput = ""; showPageDialog = true; showMoreMenu = false })
                             DropdownMenuItem(text = { Text("Editar data de início") }, leadingIcon = { Icon(Icons.Default.CalendarMonth, null) }, onClick = { showStartDatePicker = true; showMoreMenu = false })
                             DropdownMenuItem(text = { Text("Editar data de conclusão") }, leadingIcon = { Icon(Icons.Default.EventAvailable, null) }, onClick = { showEndDatePicker = true; showMoreMenu = false })
+                            DropdownMenuItem(text = { Text("Notas") }, leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, null) }, onClick = { showPersonalNotes = true; showMoreMenu = false })
                             DropdownMenuItem(text = { Text(if (mediaItem.favorite) "Remover dos favoritos" else "Favoritar") }, leadingIcon = { Icon(if (mediaItem.favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder, null) }, onClick = { vm.toggleFavorite(); showMoreMenu = false })
                             HorizontalDivider()
                             DropdownMenuItem(text = { Text("Remover livro", color = MaterialTheme.colorScheme.error) }, leadingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) }, onClick = { showDelete = true; showMoreMenu = false })
@@ -534,6 +545,14 @@ fun BookDetailScreen(
             initial    = mediaItem.completionDate?.time,
             onConfirm  = { vm.setCompletionDate(java.util.Date(it)); showEndDatePicker = false },
             onDismiss  = { showEndDatePicker = false },
+        )
+    }
+
+    if (showPersonalNotes) {
+        NotesDialog(
+            initialText = mediaItem.personalNotes ?: "",
+            onDismiss   = { showPersonalNotes = false },
+            onSave      = { vm.setPersonalNotes(it) },
         )
     }
 

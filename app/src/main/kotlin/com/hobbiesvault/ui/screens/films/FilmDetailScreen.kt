@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -36,6 +37,7 @@ import com.hobbiesvault.data.db.DB
 import com.hobbiesvault.model.MediaItem
 import com.hobbiesvault.model.MediaStatus
 import com.hobbiesvault.service.MediaCacheService
+import com.hobbiesvault.ui.components.NotesDialog
 import com.hobbiesvault.ui.theme.ColorFilme
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -82,6 +84,13 @@ class FilmDetailViewModel : ViewModel() {
         viewModelScope.launch { DB.repo.update(updated) }
     }
 
+    fun setNotes(text: String) {
+        val current = mediaItem ?: return
+        val updated = current.copy(personalNotes = text.ifBlank { null })
+        mediaItem = updated
+        viewModelScope.launch { DB.repo.update(updated) }
+    }
+
     fun refreshCache() {
         val current = mediaItem ?: return
         viewModelScope.launch {
@@ -113,6 +122,7 @@ fun FilmDetailScreen(
     var showDelete        by remember { mutableStateOf(false) }
     var showStatusMenu    by remember { mutableStateOf(false) }
     var showMoreMenu      by remember { mutableStateOf(false) }
+    var showNotes         by remember { mutableStateOf(false) }
     var synopsisExpanded  by remember { mutableStateOf(false) }
     var showCast          by remember { mutableStateOf(false) }
     var showCrew          by remember { mutableStateOf(false) }
@@ -289,6 +299,7 @@ fun FilmDetailScreen(
                             }
                             DropdownMenu(expanded = showMoreMenu, onDismissRequest = { showMoreMenu = false }) {
                                 DropdownMenuItem(text = { Text("Atualizar") }, leadingIcon = { Icon(Icons.Default.Refresh, null) }, onClick = { vm.refreshCache(); showMoreMenu = false })
+                                DropdownMenuItem(text = { Text("Notas") }, leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, null) }, onClick = { showNotes = true; showMoreMenu = false })
                                 DropdownMenuItem(text = { Text("Filmes Relacionados") }, leadingIcon = { Icon(Icons.Default.MovieCreation, null) }, onClick = { showRelated = !showRelated; showMoreMenu = false })
                                 DropdownMenuItem(text = { Text(if (mediaItem.favorite) "Remover dos favoritos" else "Favoritar") }, leadingIcon = { Icon(if (mediaItem.favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder, null) }, onClick = { vm.toggleFavorite(); showMoreMenu = false })
                                 HorizontalDivider()
@@ -512,6 +523,14 @@ fun FilmDetailScreen(
                 }
             }
         }
+    }
+
+    if (showNotes) {
+        NotesDialog(
+            initialText = mediaItem.personalNotes ?: "",
+            onDismiss   = { showNotes = false },
+            onSave      = { vm.setNotes(it) },
+        )
     }
 
     if (showDelete) {
