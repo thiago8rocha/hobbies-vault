@@ -6,6 +6,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,11 +31,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.hobbiesvault.data.db.DB
+import com.hobbiesvault.data.db.entity.MovieListEntity
 import com.hobbiesvault.model.MediaItem
 import com.hobbiesvault.model.MediaStatus
 import com.hobbiesvault.service.MediaCacheService
@@ -124,9 +128,8 @@ fun FilmDetailScreen(
     var showMoreMenu      by remember { mutableStateOf(false) }
     var showNotes         by remember { mutableStateOf(false) }
     var synopsisExpanded  by remember { mutableStateOf(false) }
-    var showCast          by remember { mutableStateOf(false) }
-    var showCrew          by remember { mutableStateOf(false) }
     var showRelated       by remember { mutableStateOf(false) }
+    var showAddToList     by remember { mutableStateOf(false) }
 
     val statusLabel = when (mediaItem.status) {
         MediaStatus.WATCHED         -> "Assistido"
@@ -301,26 +304,11 @@ fun FilmDetailScreen(
                                 DropdownMenuItem(text = { Text("Atualizar") }, leadingIcon = { Icon(Icons.Default.Refresh, null) }, onClick = { vm.refreshCache(); showMoreMenu = false })
                                 DropdownMenuItem(text = { Text("Notas") }, leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, null) }, onClick = { showNotes = true; showMoreMenu = false })
                                 DropdownMenuItem(text = { Text("Filmes Relacionados") }, leadingIcon = { Icon(Icons.Default.MovieCreation, null) }, onClick = { showRelated = !showRelated; showMoreMenu = false })
+                                DropdownMenuItem(text = { Text("Adicionar à lista") }, leadingIcon = { Icon(Icons.Default.PlaylistAdd, null) }, onClick = { showAddToList = true; showMoreMenu = false })
                                 DropdownMenuItem(text = { Text(if (mediaItem.favorite) "Remover dos favoritos" else "Favoritar") }, leadingIcon = { Icon(if (mediaItem.favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder, null) }, onClick = { vm.toggleFavorite(); showMoreMenu = false })
                                 HorizontalDivider()
                                 DropdownMenuItem(text = { Text("Remover filme", color = MaterialTheme.colorScheme.error) }, leadingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) }, onClick = { showDelete = true; showMoreMenu = false })
                             }
-                        }
-                    }
-                }
-
-                // ── Gêneros ──────────────────────────────────────────────────
-                if (!genres.isNullOrEmpty()) {
-                    item {
-                        Column(Modifier.padding(horizontal = 16.dp)) {
-                            FilmSectionTitle("Gêneros")
-                            Spacer(Modifier.height(6.dp))
-                            Text(
-                                genres.joinToString(", "),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
-                            )
-                            Spacer(Modifier.height(16.dp))
                         }
                     }
                 }
@@ -370,6 +358,22 @@ fun FilmDetailScreen(
                     }
                 }
 
+                // ── Gêneros ──────────────────────────────────────────────────
+                if (!genres.isNullOrEmpty()) {
+                    item {
+                        Column(Modifier.padding(horizontal = 16.dp)) {
+                            FilmSectionTitle("Gêneros")
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                genres.joinToString(", "),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+                            )
+                            Spacer(Modifier.height(16.dp))
+                        }
+                    }
+                }
+
                 if (vm.loadingCache) {
                     item {
                         Box(Modifier.fillMaxWidth().padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
@@ -378,30 +382,52 @@ fun FilmDetailScreen(
                     }
                 } else {
 
+                    // ── Onde Assistir ─────────────────────────────────────────
+                    if (providers.isNotEmpty()) {
+                        item {
+                            Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                                FilmSectionTitle("Onde Assistir")
+                                Spacer(Modifier.height(12.dp))
+                                if (providers.size > 2) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                        providers.chunked(2).forEach { row ->
+                                            Row(
+                                                Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                            ) {
+                                                row.forEach { p ->
+                                                    FilmProviderRow(p, modifier = Modifier.weight(1f))
+                                                }
+                                                if (row.size == 1) Spacer(Modifier.weight(1f))
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                        providers.forEach { p -> FilmProviderRow(p) }
+                                    }
+                                }
+                                Spacer(Modifier.height(24.dp))
+                            }
+                        }
+                    }
+
                     // ── Elenco ───────────────────────────────────────────────
                     if (!cast.isNullOrEmpty()) {
                         item {
                             Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                                 FilmSectionTitle("Elenco")
-                                Spacer(Modifier.height(10.dp))
-                                (if (showCast) cast else cast.take(5)).forEach { p ->
-                                    FilmPersonRow(
-                                        name     = p["name"] as? String ?: p["nome"] as? String ?: "",
-                                        sub      = p["character"] as? String ?: p["personagem"] as? String ?: "",
-                                        photoUrl = p["photoUrl"] as? String ?: p["fotoUrl"] as? String,
-                                    )
+                                Spacer(Modifier.height(12.dp))
+                                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    items(cast) { p ->
+                                        FilmPersonAvatar(
+                                            name     = p["name"] as? String ?: p["nome"] as? String ?: "",
+                                            sub      = p["character"] as? String ?: p["personagem"] as? String ?: "",
+                                            photoUrl = p["photoUrl"] as? String ?: p["fotoUrl"] as? String,
+                                        )
+                                    }
                                 }
-                                if (cast.size > 5) {
-                                    Text(
-                                        if (showCast) "Ver menos" else "Ver todos (${cast.size})",
-                                        color      = ColorFilme,
-                                        fontSize   = 12.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        modifier   = Modifier
-                                            .clickable { showCast = !showCast }
-                                            .padding(top = 2.dp, bottom = 4.dp),
-                                    )
-                                }
+                                Spacer(Modifier.height(12.dp))
                             }
                         }
                     }
@@ -411,63 +437,21 @@ fun FilmDetailScreen(
                         item {
                             Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                                 FilmSectionTitle("Equipe Técnica")
-                                Spacer(Modifier.height(10.dp))
-                                (if (showCrew) crew else crew.take(5)).forEach { p ->
-                                    FilmPersonRow(
-                                        name     = p["name"] as? String ?: p["nome"] as? String ?: "",
-                                        sub      = p["role"] as? String ?: p["funcao"] as? String ?: "",
-                                        photoUrl = p["photoUrl"] as? String ?: p["fotoUrl"] as? String,
-                                    )
+                                Spacer(Modifier.height(12.dp))
+                                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    items(crew) { p ->
+                                        FilmPersonAvatar(
+                                            name     = p["name"] as? String ?: p["nome"] as? String ?: "",
+                                            sub      = p["role"] as? String ?: p["funcao"] as? String ?: "",
+                                            photoUrl = p["photoUrl"] as? String ?: p["fotoUrl"] as? String,
+                                        )
+                                    }
                                 }
-                                if (crew.size > 5) {
-                                    Text(
-                                        if (showCrew) "Ver menos" else "Ver todos (${crew.size})",
-                                        color      = ColorFilme,
-                                        fontSize   = 12.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        modifier   = Modifier
-                                            .clickable { showCrew = !showCrew }
-                                            .padding(top = 2.dp, bottom = 4.dp),
-                                    )
-                                }
+                                Spacer(Modifier.height(12.dp))
                             }
                         }
                     }
 
-                    // ── Onde Assistir ─────────────────────────────────────────
-                    if (providers.isNotEmpty()) {
-                        item {
-                            Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                                FilmSectionTitle("Onde Assistir")
-                                Spacer(Modifier.height(12.dp))
-                                Column(
-                                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                                ) {
-                                    providers.forEach { p ->
-                                        val name    = p["nome"] as? String ?: p["name"] as? String ?: ""
-                                        val logoUrl = p["logoUrl"] as? String
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                        ) {
-                                            if (logoUrl != null) {
-                                                AsyncImage(
-                                                    model              = logoUrl,
-                                                    contentDescription = name,
-                                                    contentScale       = ContentScale.Crop,
-                                                    modifier           = Modifier
-                                                        .size(36.dp)
-                                                        .clip(RoundedCornerShape(6.dp)),
-                                                )
-                                            }
-                                            Text(name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                                        }
-                                    }
-                                }
-                                Spacer(Modifier.height(24.dp))
-                            }
-                        }
-                    }
                 }
 
                 // ── Filmes Relacionados (toggle) ──────────────────────────────
@@ -533,6 +517,10 @@ fun FilmDetailScreen(
         )
     }
 
+    if (showAddToList) {
+        AddToListSheet(mediaItemId = mediaItem.id, onDismiss = { showAddToList = false })
+    }
+
     if (showDelete) {
         AlertDialog(
             onDismissRequest = { showDelete = false },
@@ -562,6 +550,117 @@ private fun FilmStatusMenuItem(icon: androidx.compose.ui.graphics.vector.ImageVe
 }
 
 @Composable
+private fun FilmProviderRow(p: Map<String, Any?>, modifier: Modifier = Modifier) {
+    val name    = p["nome"] as? String ?: p["name"] as? String ?: ""
+    val logoUrl = p["logoUrl"] as? String
+    Row(
+        modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        if (logoUrl != null) {
+            AsyncImage(
+                model              = logoUrl,
+                contentDescription = name,
+                contentScale       = ContentScale.Crop,
+                modifier           = Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(6.dp)),
+            )
+        }
+        Text(name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddToListSheet(mediaItemId: Int?, onDismiss: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    val lists by DB.repo.watchLists().collectAsStateWithLifecycle(initialValue = emptyList())
+    var memberOf by remember { mutableStateOf<Set<Int>>(emptySet()) }
+    var showCreate by remember { mutableStateOf(false) }
+    var newListName by remember { mutableStateOf("") }
+
+    LaunchedEffect(mediaItemId) {
+        if (mediaItemId != null) memberOf = DB.repo.listIdsOfItem(mediaItemId).toSet()
+    }
+
+    fun toggle(list: MovieListEntity) {
+        val id = mediaItemId ?: return
+        scope.launch {
+            if (list.id in memberOf) {
+                DB.repo.removeFromList(list.id, id)
+                memberOf = memberOf - list.id
+            } else {
+                DB.repo.addToList(list.id, id)
+                memberOf = memberOf + list.id
+            }
+        }
+    }
+
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.padding(horizontal = 20.dp, vertical = 8.dp).padding(bottom = 32.dp)) {
+            Text("Adicionar à lista", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(12.dp))
+            if (lists.isEmpty() && !showCreate) {
+                Text(
+                    "Nenhuma lista criada ainda",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                )
+                Spacer(Modifier.height(12.dp))
+            } else {
+                lists.forEach { list ->
+                    Row(
+                        Modifier.fillMaxWidth().clickable { toggle(list) }.padding(vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Checkbox(checked = list.id in memberOf, onCheckedChange = { toggle(list) })
+                        Spacer(Modifier.width(8.dp))
+                        Text(list.name, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+            if (showCreate) {
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value         = newListName,
+                    onValueChange = { newListName = it },
+                    label         = { Text("Nome da lista") },
+                    singleLine    = true,
+                    modifier      = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(12.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedButton(onClick = { showCreate = false; newListName = "" }) { Text("Cancelar") }
+                    Button(
+                        enabled = newListName.isNotBlank(),
+                        onClick = {
+                            val id = mediaItemId
+                            scope.launch {
+                                DB.repo.createList(newListName.trim())
+                                if (id != null) {
+                                    val newList = DB.repo.getAllLists().maxByOrNull { it.id }
+                                    newList?.let { DB.repo.addToList(it.id, id); memberOf = memberOf + it.id }
+                                }
+                                newListName = ""
+                                showCreate = false
+                            }
+                        },
+                    ) { Text("Criar e adicionar") }
+                }
+            } else {
+                TextButton(onClick = { showCreate = true }) {
+                    Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Nova lista")
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun FilmSectionTitle(text: String) {
     Text(
         text,
@@ -580,18 +679,16 @@ private fun FilmMetaItem(icon: androidx.compose.ui.graphics.vector.ImageVector, 
     }
 }
 
+/** Avatar em lista horizontal — mesmo padrão usado para Personagens/Staff em Mangás. */
 @Composable
-private fun FilmPersonRow(name: String, sub: String, photoUrl: String?) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .padding(bottom = 10.dp),
-        verticalAlignment     = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+private fun FilmPersonAvatar(name: String, sub: String, photoUrl: String?) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.width(72.dp),
     ) {
         Box(
             Modifier
-                .size(40.dp)
+                .size(64.dp)
                 .clip(CircleShape)
                 .background(ColorFilme.copy(alpha = 0.12f)),
             contentAlignment = Alignment.Center,
@@ -603,14 +700,25 @@ private fun FilmPersonRow(name: String, sub: String, photoUrl: String?) {
                     modifier = Modifier.fillMaxSize().clip(CircleShape),
                 )
             } else {
-                Icon(Icons.Default.Person, null, modifier = Modifier.size(20.dp), tint = Color.White.copy(alpha = 0.38f))
+                Icon(Icons.Default.Person, null, modifier = Modifier.size(28.dp), tint = Color.White.copy(alpha = 0.38f))
             }
         }
-        Column {
-            Text(name, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
-            if (sub.isNotBlank()) {
-                Text(sub, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f), fontSize = 11.sp)
-            }
+        Spacer(Modifier.height(4.dp))
+        Text(
+            name,
+            style     = MaterialTheme.typography.labelSmall,
+            textAlign = TextAlign.Center,
+            maxLines  = 2,
+            overflow  = TextOverflow.Ellipsis,
+        )
+        if (sub.isNotBlank()) {
+            Text(
+                sub,
+                style    = MaterialTheme.typography.labelSmall,
+                color    = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }
