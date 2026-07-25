@@ -1,0 +1,118 @@
+﻿package com.hobbiesvault.data.db.entity
+
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import com.hobbiesvault.model.GameConsole
+import com.hobbiesvault.model.MediaItem
+import com.hobbiesvault.model.MediaStatus
+import com.hobbiesvault.model.MediaType
+import java.util.Date
+
+@Entity(tableName = "media_items")
+data class MediaItemEntity(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    @ColumnInfo(name = "tipo")                     val type: String,
+    @ColumnInfo(name = "titulo")                   val title: String,
+    @ColumnInfo(name = "status")                   val status: String,
+    @ColumnInfo(name = "nota")                     val rating: Double? = null,
+    @ColumnInfo(name = "titulo_resenha")           val reviewTitle: String? = null,
+    @ColumnInfo(name = "comentario")               val notes: String? = null,
+    @ColumnInfo(name = "capa_url")                 val coverUrl: String? = null,
+    @ColumnInfo(name = "data_conclusao_ms")        val completionDateMs: Long? = null,
+    @ColumnInfo(name = "data_adicao_ms")           val addedDateMs: Long,
+    @ColumnInfo(name = "favorito")                 val favorite: Boolean = false,
+    @ColumnInfo(name = "console")                  val console: String? = null,
+    @ColumnInfo(name = "horas_jogadas_minutos")    val playedMinutes: Int? = null,
+    @ColumnInfo(name = "conquistas_desbloqueadas") val achievementsUnlocked: Int? = null,
+    @ColumnInfo(name = "conquistas_total")         val totalAchievements: Int? = null,
+    @ColumnInfo(name = "trofeus_ouro")             val goldTrophies: Int? = null,
+    @ColumnInfo(name = "trofeus_prata")            val silverTrophies: Int? = null,
+    @ColumnInfo(name = "trofeus_bronze")           val bronzeTrophies: Int? = null,
+    @ColumnInfo(name = "trofeu_platina")           val platinumTrophy: Boolean? = null,
+    @ColumnInfo(name = "desenvolvedor")            val developer: String? = null,
+    @ColumnInfo(name = "progresso_atual")          val currentProgress: Int? = null,
+    @ColumnInfo(name = "progresso_total")          val totalProgress: Int? = null,
+    @ColumnInfo(name = "streaming_plataforma")     val streamingPlatform: String? = null,
+    @ColumnInfo(name = "data_lancamento_ms")       val releaseDateMs: Long? = null,
+    @ColumnInfo(name = "data_inicio_leitura_ms")   val readingStartDateMs: Long? = null,
+    @ColumnInfo(name = "data_releitura_ms")        val rereadingDateMs: Long? = null,
+    @ColumnInfo(name = "genero")                   val genre: String? = null,
+    @ColumnInfo(name = "id_externo")               val externalId: String? = null,
+    @ColumnInfo(name = "fonte_api")                val apiSource: String? = null,
+    @ColumnInfo(name = "data_conclusao_historia_ms") val historyCompletionDateMs: Long? = null,
+    @ColumnInfo(name = "data_conclusao_extras_ms")   val extrasCompletionDateMs: Long? = null,
+    @ColumnInfo(name = "data_conclusao_platina_ms")  val platinumCompletionDateMs: Long? = null,
+) {
+    fun toDomain() = MediaItem(
+        id                  = id,
+        type                = MediaType.fromDb(type),
+        title               = title,
+        status              = MediaStatus.fromDb(status),
+        rating              = rating,
+        reviewTitle         = reviewTitle,
+        notes               = notes,
+        coverUrl            = coverUrl,
+        completionDate      = completionDateMs?.let { Date(it) },
+        addedDate           = Date(addedDateMs),
+        favorite            = favorite,
+        console             = console?.let { GameConsole.fromDb(it) },
+        playedMinutes       = playedMinutes,
+        achievementsUnlocked = achievementsUnlocked,
+        totalAchievements   = totalAchievements,
+        goldTrophies        = goldTrophies,
+        silverTrophies      = silverTrophies,
+        bronzeTrophies      = bronzeTrophies,
+        platinumTrophy      = platinumTrophy,
+        genre               = genre,
+        developer           = developer,
+        currentProgress     = currentProgress,
+        totalProgress       = totalProgress,
+        streamingPlatform   = streamingPlatform,
+        releaseDate         = releaseDateMs?.let { Date(it) },
+        readingStartDate    = readingStartDateMs?.let { Date(it) },
+        rereadingDate       = rereadingDateMs?.let { Date(it) },
+        externalId          = externalId,
+        apiSource           = apiSource,
+        historyCompletionDate   = historyCompletionDateMs?.let { Date(it) },
+        extrasCompletionDate    = extrasCompletionDateMs?.let { Date(it) },
+        platinumCompletionDate  = platinumCompletionDateMs?.let { Date(it) },
+    )
+
+    companion object {
+        fun fromDomain(item: MediaItem) = MediaItemEntity(
+            id                   = item.id ?: 0,
+            type                 = item.type.dbValue,
+            title                = item.title,
+            status               = item.status.dbValue,
+            rating               = item.rating,
+            reviewTitle          = item.reviewTitle,
+            notes                = item.notes,
+            coverUrl             = item.coverUrl,
+            completionDateMs     = item.completionDate?.time,
+            addedDateMs          = item.addedDate.time,
+            favorite             = item.favorite,
+            console              = item.console?.dbValue,
+            playedMinutes        = item.playedMinutes,
+            achievementsUnlocked = item.achievementsUnlocked,
+            totalAchievements    = item.totalAchievements,
+            goldTrophies         = item.goldTrophies,
+            silverTrophies       = item.silverTrophies,
+            bronzeTrophies       = item.bronzeTrophies,
+            platinumTrophy       = item.platinumTrophy,
+            genre                = item.genre,
+            developer            = item.developer,
+            currentProgress      = item.currentProgress,
+            totalProgress        = item.totalProgress,
+            streamingPlatform    = item.streamingPlatform,
+            releaseDateMs        = item.releaseDate?.time,
+            readingStartDateMs   = item.readingStartDate?.time,
+            rereadingDateMs      = item.rereadingDate?.time,
+            externalId           = item.externalId,
+            apiSource            = item.apiSource,
+            historyCompletionDateMs  = item.historyCompletionDate?.time,
+            extrasCompletionDateMs   = item.extrasCompletionDate?.time,
+            platinumCompletionDateMs = item.platinumCompletionDate?.time,
+        )
+    }
+}

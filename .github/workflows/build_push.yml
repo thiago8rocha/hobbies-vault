@@ -1,0 +1,234 @@
+name: Build app
+
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Build and Release v{0}', github.event.inputs.version) || github.event.head_commit.message }}
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (without "v" prefix, e.g. 1.0.0)'
+        required: true
+        type: string
+      beta:
+        description: "Beta release"
+        default: false
+        required: false
+        type: boolean
+      message:
+        description: "Message for releases (the text at the top of changelog)"
+        default: ""
+        required: false
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  checks: write
+
+jobs:
+  build:
+    name: Build app
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install compileSdk build-tools
+        run: ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager "build-tools;35.0.0" "platforms;android-35"
+
+      - name: Set up CHANGELOG parser
+        uses: taiki-e/install-action@parse-changelog
+
+      - name: Copy CI gradle.properties
+        run: |
+          mkdir -p ~/.gradle
+          cp .github/runner-files/ci-gradle.properties ~/.gradle/gradle.properties
+
+      - name: Get changelog
+        id: changelog
+        shell: bash
+        run: |
+          # extended SemVer (major.minor.patch)
+          VERSION_FORMAT='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z\.-]+)?(\+[0-9A-Za-z\.-]+)?$|^Unreleased$'
+          {
+            echo "CHANGELOG<<END_OF_FILE"
+            parse-changelog CHANGELOG.md ${{ github.event.inputs.version == '' && 'Unreleased' || github.event.inputs.version }} --version-format "$VERSION_FORMAT" || parse-changelog CHANGELOG.md Unreleased --version-format "$VERSION_FORMAT" || echo "No documented changes so far..."
+            echo ""
+            echo "END_OF_FILE"
+          } >> "$GITHUB_OUTPUT" 2> /dev/null
+
+      # STABLE
+      - name: Prepare release build
+        if: github.event.inputs.version != '' && github.event.inputs.beta != 'true'
+        run: |
+          echo "VERSION_TAG=v${{ github.event.inputs.version }}" >> $GITHUB_ENV
+          echo "BUILD_TYPE=Release" >> $GITHUB_ENV
+          echo "STAGE=release" >> $GITHUB_ENV
+
+      # BETA
+      - name: Prepare beta build
+        if: github.event.inputs.version != '' && github.event.inputs.beta == 'true'
+        run: |
+          BETA_COUNT=$(git tag -l --sort=refname "v${{ github.event.inputs.version }}-b*" | tail -n1 | sed "s/^\S*-b//g")
+          if [ -z "$BETA_COUNT" ]; then
+            BETA_COUNT="1"
+          else
+            BETA_COUNT=$((BETA_COUNT+1))
+          fi
+          echo "VERSION_TAG=v${{ github.event.inputs.version }}-b${BETA_COUNT}" >> $GITHUB_ENV
+          echo "BUILD_TYPE=Beta" >> $GITHUB_ENV
+          echo "STAGE=beta" >> $GITHUB_ENV
+
+      # NIGHTLY
+      - name: Prepare nightly build
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          echo "VERSION_TAG=r$(git rev-list --count HEAD)" >> $GITHUB_ENV
+          echo "BUILD_TYPE=Nightly" >> $GITHUB_ENV
+          echo "STAGE=nightly" >> $GITHUB_ENV
+          echo "COMMIT_HASH=$(git rev-parse HEAD)" >> $GITHUB_ENV
+          echo "COMMIT_SHORT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Build the app
+        run: ./gradlew assemble${{ env.BUILD_TYPE }}
+
+      - name: Run unit tests
+        run: ./gradlew testReleaseUnitTest test${{ env.BUILD_TYPE }}UnitTest
+
+      - name: Publish test report
+        uses: mikepenz/action-junit-report@v5
+        if: success() || failure()
+        with:
+          include_passed: true
+          detailed_summary: true
+          report_paths: "**/build/test-results/test*/TEST-*.xml"
+
+      # A nightly já sai assinada com a keystore de debug (signingConfig definido no
+      # build.gradle.kts) — não precisa de secrets. Beta/Release saem unsigned do Gradle
+      # de propósito e são assinadas aqui com a keystore de release real.
+      - name: Sign APK (beta/release)
+        if: env.STAGE == 'beta' || env.STAGE == 'release'
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          ALIAS: ${{ secrets.ALIAS }}
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -e
+          if [ -z "$SIGNING_KEY" ]; then
+            echo "::error::Secrets de assinatura (SIGNING_KEY/ALIAS/KEY_STORE_PASSWORD/KEY_PASSWORD) não configurados no repositório. Configure-os em Settings > Secrets and variables > Actions antes de disparar uma release ${{ env.STAGE }}."
+            exit 1
+          fi
+
+          BUILD_TOOLS="${ANDROID_SDK_ROOT}/build-tools/35.0.0"
+          APK_DIR="app/build/outputs/apk/${{ env.STAGE }}"
+          UNSIGNED_APK="$APK_DIR/app-${{ env.STAGE }}-unsigned.apk"
+
+          echo "$SIGNING_KEY" | base64 -d > release.keystore
+
+          "$BUILD_TOOLS/zipalign" -p -f 4 "$UNSIGNED_APK" "$APK_DIR/app-${{ env.STAGE }}-aligned.apk"
+          "$BUILD_TOOLS/apksigner" sign \
+            --ks release.keystore \
+            --ks-key-alias "$ALIAS" \
+            --ks-pass "pass:$KEY_STORE_PASSWORD" \
+            --key-pass "pass:$KEY_PASSWORD" \
+            --out "$APK_DIR/app-${{ env.STAGE }}-signed.apk" \
+            "$APK_DIR/app-${{ env.STAGE }}-aligned.apk"
+
+          rm release.keystore
+
+      - name: Prepare release artifact
+        if: env.VERSION_TAG != ''
+        run: |
+          set -e
+          case "${{ env.STAGE }}" in
+            nightly) SRC="app/build/outputs/apk/nightly/app-nightly.apk" ;;
+            *)       SRC="app/build/outputs/apk/${{ env.STAGE }}/app-${{ env.STAGE }}-signed.apk" ;;
+          esac
+          cp "$SRC" "hobbiesvault-${{ env.VERSION_TAG }}.apk"
+          echo "APK_SHA=$(sha256sum hobbiesvault-${{ env.VERSION_TAG }}.apk | awk '{ print $1 }')" >> $GITHUB_ENV
+
+      - name: Upload APK to artifact
+        uses: actions/upload-artifact@v4
+        if: env.VERSION_TAG != ''
+        with:
+          name: hobbiesvault-${{ env.VERSION_TAG }}
+          path: hobbiesvault-${{ env.VERSION_TAG }}.apk
+
+      - name: Create and push tag
+        if: env.VERSION_TAG != ''
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "${{ env.VERSION_TAG }}"
+          git push origin "${{ env.VERSION_TAG }}"
+
+      - name: Create Release
+        if: env.STAGE == 'release' || env.STAGE == 'beta'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.VERSION_TAG }}
+          name: HobbiesVault ${{ env.VERSION_TAG }}
+          body: |
+            ${{ github.event.inputs.message }}
+
+            ${{ steps.changelog.outputs.CHANGELOG }}
+            ---
+
+            ### Checksum
+
+            | Arquivo | SHA-256 |
+            | ------- | ------- |
+            | hobbiesvault-${{ env.VERSION_TAG }}.apk | ${{ env.APK_SHA }} |
+          files: hobbiesvault-${{ env.VERSION_TAG }}.apk
+          draft: true
+          prerelease: ${{ github.event.inputs.beta }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Nightly
+        if: env.STAGE == 'nightly'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.VERSION_TAG }}
+          name: HobbiesVault Nightly (${{ env.VERSION_TAG }})
+          body: |
+            > [!CAUTION]
+            > _**Esta build é apenas para testes!**_
+            >
+            > Gerada a partir do commit [`${{ env.COMMIT_SHORT_HASH }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ env.COMMIT_HASH }})
+
+            Não é recomendada para uso diário. Prefira a última release estável (${{ github.server_url }}/${{ github.repository }}/releases/latest).
+
+            ${{ steps.changelog.outputs.CHANGELOG }}
+            ---
+
+            ### Checksum
+
+            | Arquivo | SHA-256 |
+            | ------- | ------- |
+            | hobbiesvault-${{ env.VERSION_TAG }}.apk | ${{ env.APK_SHA }} |
+          files: hobbiesvault-${{ env.VERSION_TAG }}.apk
+          draft: false
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

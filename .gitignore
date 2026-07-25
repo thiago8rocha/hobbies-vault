@@ -1,0 +1,45 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Android build outputs
+/build/
+app/build/
+.gradle/
+
+# Android Studio
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Credentials — NEVER commit
+secrets.json
+app/src/main/assets/secrets.json
+*.token
+psn_tokens.json
+anilist_token.json
+kitsu_token.json
+*.keystore
+*.jks
+
+# Local machine config — never portable across dev machines
+local.properties
+
+# Local scratch files
+backup.ab
+
+# Prints/mockups de referência de UI — só local, não versionado
+/Referencias/
