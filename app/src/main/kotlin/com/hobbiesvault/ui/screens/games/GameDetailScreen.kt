@@ -388,10 +388,10 @@ fun GameDetailScreen(
                         Column(contentPad) {
                             GameSectionTitle("Informações")
                             Spacer(Modifier.height(10.dp))
-                            GameInfoCard {
-                                if (genre != null)      GameInfoRow("Gênero",        genre)
-                                if (developer != null)  GameInfoRow("Desenvolvedor", developer)
-                                if (publisher != null)  GameInfoRow("Publicadora",   publisher)
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                if (genre != null)      GameInfoTile("Gênero",        genre)
+                                if (developer != null)  GameInfoTile("Desenvolvedor", developer)
+                                if (publisher != null)  GameInfoTile("Publicadora",   publisher)
                             }
                             Spacer(Modifier.height(24.dp))
                         }
@@ -423,16 +423,16 @@ fun GameDetailScreen(
                     Column(contentPad) {
                         GameSectionTitle("Datas")
                         Spacer(Modifier.height(10.dp))
-                        GameInfoCard {
-                            GameInfoRow("Adicionado", dateFormatter.format(mediaItem.addedDate))
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            GameInfoTile("Adicionado", dateFormatter.format(mediaItem.addedDate))
                             if (mediaItem.historyCompletionDate != null)
-                                GameInfoRow("Concluído (História)", dateFormatter.format(mediaItem.historyCompletionDate))
+                                GameInfoTile("Concluído (História)", dateFormatter.format(mediaItem.historyCompletionDate))
                             if (mediaItem.extrasCompletionDate != null)
-                                GameInfoRow("Concluído (Extras)", dateFormatter.format(mediaItem.extrasCompletionDate))
+                                GameInfoTile("Concluído (Extras)", dateFormatter.format(mediaItem.extrasCompletionDate))
                             if (mediaItem.platinumCompletionDate != null)
-                                GameInfoRow("Concluído (100%)", dateFormatter.format(mediaItem.platinumCompletionDate))
+                                GameInfoTile("Concluído (100%)", dateFormatter.format(mediaItem.platinumCompletionDate))
                             if (releaseDateMs != null)
-                                GameInfoRow("Lançamento", dateFormatter.format(java.util.Date(releaseDateMs)))
+                                GameInfoTile("Lançamento", dateFormatter.format(java.util.Date(releaseDateMs)))
                         }
                         Spacer(Modifier.height(24.dp))
                     }
@@ -566,39 +566,29 @@ private fun GameSectionTitle(text: String) {
 }
 
 @Composable
-private fun GameInfoCard(content: @Composable ColumnScope.() -> Unit) {
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .background(
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
-            )
-            .then(
-                Modifier.padding(horizontal = 14.dp, vertical = 12.dp)
-            )
+private fun GameInfoTile(label: String, value: String) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape    = RoundedCornerShape(12.dp),
+        color    = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
     ) {
-        Column(content = content)
-    }
-}
-
-@Composable
-private fun GameInfoRow(label: String, value: String) {
-    Row(
-        Modifier.fillMaxWidth().padding(bottom = 8.dp),
-        verticalAlignment = Alignment.Top,
-    ) {
-        Text(
-            label,
-            style    = MaterialTheme.typography.bodySmall,
-            color    = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
-            modifier = Modifier.width(110.dp),
-        )
-        Text(
-            value,
-            style      = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.SemiBold,
-            modifier   = Modifier.weight(1f),
-        )
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.Top,
+        ) {
+            Text(
+                label,
+                style    = MaterialTheme.typography.bodySmall,
+                color    = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
+                modifier = Modifier.width(110.dp),
+            )
+            Text(
+                value,
+                style      = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.SemiBold,
+                modifier   = Modifier.weight(1f),
+            )
+        }
     }
 }
 
