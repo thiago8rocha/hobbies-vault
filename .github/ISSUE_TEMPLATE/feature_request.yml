@@ -1,0 +1,56 @@
+name: 🌟 Feature request
+description: Suggest a feature to improve HobbiesVault
+labels: [enhancement]
+body:
+
+  - type: dropdown
+    id: media-type
+    attributes:
+      label: Affected area
+      description: Which part of the app is this about?
+      multiple: true
+      options:
+        - Games
+        - Manga/Webtoons
+        - Series
+        - Movies
+        - Books
+        - Statistics
+        - Search
+        - Settings
+        - Other/not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: feature-description
+    attributes:
+      label: Describe your suggested feature
+      description: How can HobbiesVault be improved?
+      placeholder: |
+        Example:
+          "It should work like this..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: other-details
+    attributes:
+      label: Other details
+      placeholder: |
+        Additional details, mockups and attachments.
+
+  - type: checkboxes
+    id: acknowledgements
+    attributes:
+      label: Acknowledgements
+      description: Read this carefully, we will close and ignore your issue if you skimmed through this.
+      options:
+        - label: I have searched the existing issues and this is a new ticket, **NOT** a duplicate or related to another open issue.
+          required: true
+        - label: I have written a short but informative title.
+          required: true
+        - label: I have checked through the app settings for this feature already existing.
+          required: true
+        - label: I will fill out all of the requested information in this form.
+          required: true
