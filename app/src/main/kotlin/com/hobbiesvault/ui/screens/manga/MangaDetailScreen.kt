@@ -286,8 +286,12 @@ fun MangaDetailScreen(
                                 MediaStatus.forManga()
                                     .filter { it != MediaStatus.READ || serializationStatus != "Em andamento" }
                                     .forEach { s ->
+                                        val selected = s == mediaItem.status
                                         DropdownMenuItem(
                                             text    = { Text(mangaStatusLabel(s)) },
+                                            trailingIcon = {
+                                                if (selected) Icon(Icons.Default.Check, null, tint = ColorManga, modifier = Modifier.size(16.dp))
+                                            },
                                             onClick = { vm.setStatus(s); showStatusMenu = false },
                                         )
                                     }

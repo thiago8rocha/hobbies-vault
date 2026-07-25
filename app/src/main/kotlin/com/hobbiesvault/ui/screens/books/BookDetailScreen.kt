@@ -307,7 +307,14 @@ fun BookDetailScreen(
                         }
                         DropdownMenu(expanded = showStatusMenu, onDismissRequest = { showStatusMenu = false }) {
                             MediaStatus.forBook().forEach { s ->
-                                DropdownMenuItem(text = { Text(s.label) }, onClick = { vm.setStatus(s, pages); showStatusMenu = false })
+                                val selected = s == mediaItem.status
+                                DropdownMenuItem(
+                                    text = { Text(s.label) },
+                                    trailingIcon = {
+                                        if (selected) Icon(Icons.Default.Check, null, tint = ColorLivro, modifier = Modifier.size(16.dp))
+                                    },
+                                    onClick = { vm.setStatus(s, pages); showStatusMenu = false },
+                                )
                             }
                         }
                     }

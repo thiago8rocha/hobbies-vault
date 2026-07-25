@@ -324,8 +324,12 @@ fun SeriesDetailScreen(
                             }
                             DropdownMenu(expanded = showStatusMenu, onDismissRequest = { showStatusMenu = false }) {
                                 MediaStatus.forSeries().forEach { s ->
+                                    val selected = s == mediaItem.status
                                     DropdownMenuItem(
                                         text    = { Text(s.label) },
+                                        trailingIcon = {
+                                            if (selected) Icon(Icons.Default.Check, null, tint = ColorSerie, modifier = Modifier.size(16.dp))
+                                        },
                                         onClick = { vm.setStatus(s); showStatusMenu = false },
                                     )
                                 }
