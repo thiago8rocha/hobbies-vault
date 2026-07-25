@@ -17,6 +17,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -181,6 +182,7 @@ fun GameDetailScreen(
     var showNotes        by remember { mutableStateOf(false) }
     var synopsisExpanded by remember { mutableStateOf(false) }
     var showAddPlaythrough by remember { mutableStateOf(false) }
+    var showAllAchievements by remember { mutableStateOf(false) }
     var editingPlaythrough by remember { mutableStateOf<GamePlaythrough?>(null) }
 
     val playthroughs by remember(mediaItem.id) {
@@ -196,6 +198,7 @@ fun GameDetailScreen(
     val platforms    = (cache?.get("platforms") as? List<*>)?.filterIsInstance<String>()
     val releaseDateMs = (cache?.get("releaseDate") as? Double)?.toLong()
     val dlcs          = (cache?.get("dlcs") as? List<*>)?.filterIsInstance<Map<String, Any?>>()
+    val achievements  = (cache?.get("achievements") as? List<*>)?.filterIsInstance<Map<String, Any?>>()
     val expansions    = (cache?.get("expansions") as? List<*>)?.filterIsInstance<Map<String, Any?>>()
     val recommendations = (cache?.get("recommendations") as? List<*>)?.filterIsInstance<Map<String, Any?>>()
 
@@ -605,6 +608,34 @@ fun GameDetailScreen(
                             GameSectionTitle(if (console?.isPlayStation == true) "Troféus" else "Conquistas")
                             Spacer(Modifier.height(10.dp))
                             AchievementsCard(mediaItem, console?.isPlayStation == true, platformColor)
+                            if (!achievements.isNullOrEmpty()) {
+                                Spacer(Modifier.height(12.dp))
+                                val sorted = remember(achievements) {
+                                    achievements.sortedByDescending { it["achieved"] as? Boolean == true }
+                                }
+                                val visible = if (showAllAchievements) sorted else sorted.take(5)
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    visible.forEach { a ->
+                                        AchievementRow(
+                                            name        = a["name"] as? String ?: "",
+                                            description = a["description"] as? String,
+                                            iconUrl     = a["icon"] as? String,
+                                            achieved    = a["achieved"] as? Boolean == true,
+                                            color       = platformColor,
+                                        )
+                                    }
+                                }
+                                if (sorted.size > 5) {
+                                    Spacer(Modifier.height(6.dp))
+                                    Text(
+                                        if (showAllAchievements) "Ver menos" else "Ver todas (${sorted.size})",
+                                        color = platformColor,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        modifier = Modifier.clickable { showAllAchievements = !showAllAchievements },
+                                    )
+                                }
+                            }
                             Spacer(Modifier.height(24.dp))
                         }
                     }
@@ -1059,6 +1090,35 @@ private fun AchievementsCard(item: MediaItem, isPS: Boolean, color: Color) {
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun AchievementRow(name: String, description: String?, iconUrl: String?, achieved: Boolean, color: Color) {
+    Row(
+        Modifier.fillMaxWidth().alpha(if (achieved) 1f else 0.45f),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier.size(40.dp).clip(RoundedCornerShape(6.dp)).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (iconUrl != null) {
+                AsyncImage(model = iconUrl, contentDescription = name, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+            } else {
+                Icon(Icons.Default.EmojiEvents, null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+            }
+        }
+        Spacer(Modifier.width(10.dp))
+        Column(Modifier.weight(1f)) {
+            Text(name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+            if (!description.isNullOrBlank()) {
+                Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f), maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+            }
+        }
+        if (achieved) {
+            Icon(Icons.Default.CheckCircle, null, tint = color, modifier = Modifier.size(18.dp))
         }
     }
 }
