@@ -17,8 +17,9 @@ import com.hobbiesvault.data.db.entity.*
         GameCacheEntity::class,
         MangaReviewEntity::class,
         BookQuoteEntity::class,
+        GamePlaythroughEntity::class,
     ],
-    version = 13,
+    version = 14,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -29,8 +30,24 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun gameCacheDao(): GameCacheDao
     abstract fun mangaReviewDao(): MangaReviewDao
     abstract fun bookQuoteDao(): BookQuoteDao
+    abstract fun gamePlaythroughDao(): GamePlaythroughDao
 
     companion object {
+        val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS game_playthroughs (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        media_item_id INTEGER NOT NULL,
+                        titulo TEXT NOT NULL,
+                        data_inicio_ms INTEGER,
+                        data_fim_ms INTEGER,
+                        horas_jogadas INTEGER,
+                        notas TEXT
+                    )
+                """)
+            }
+        }
         val MIGRATION_12_13 = object : Migration(12, 13) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 // Resenha de livro — separada do log de comentários de leitura (`comentario`).

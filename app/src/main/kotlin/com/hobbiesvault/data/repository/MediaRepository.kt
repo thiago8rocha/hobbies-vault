@@ -1,17 +1,20 @@
 ﻿package com.hobbiesvault.data.repository
 
 import com.hobbiesvault.data.db.dao.BookQuoteDao
+import com.hobbiesvault.data.db.dao.GamePlaythroughDao
 import com.hobbiesvault.data.db.dao.MovieListDao
 import com.hobbiesvault.data.db.dao.MediaItemDao
 import com.hobbiesvault.data.db.dao.MangaReviewDao
 import com.hobbiesvault.data.db.dao.SeriesEpisodeDao
 import com.hobbiesvault.data.db.entity.BookQuoteEntity
+import com.hobbiesvault.data.db.entity.GamePlaythroughEntity
 import com.hobbiesvault.data.db.entity.MovieListEntity
 import com.hobbiesvault.data.db.entity.MovieListItemEntity
 import com.hobbiesvault.data.db.entity.MediaItemEntity
 import com.hobbiesvault.data.db.entity.MangaReviewEntity
 import com.hobbiesvault.data.db.entity.SeriesEpisodeEntity
 import com.hobbiesvault.model.BookQuote
+import com.hobbiesvault.model.GamePlaythrough
 import com.hobbiesvault.model.MangaReview
 import com.hobbiesvault.model.MediaItem
 import com.hobbiesvault.model.MediaType
@@ -25,6 +28,7 @@ class MediaRepository(
     private val episodeDao: SeriesEpisodeDao,
     private val mangaReviewDao: MangaReviewDao,
     private val bookQuoteDao: BookQuoteDao,
+    private val gamePlaythroughDao: GamePlaythroughDao,
 ) {
     // ── MediaItems ─────────────────────────────────────────────────────────────
 
@@ -162,4 +166,24 @@ class MediaRepository(
         )
 
     suspend fun deleteBookQuote(id: Int) = bookQuoteDao.delete(id)
+
+    // ── Game playthroughs ────────────────────────────────────────────────────
+
+    fun watchPlaythroughs(mediaItemId: Int): Flow<List<GamePlaythrough>> =
+        gamePlaythroughDao.watchByItem(mediaItemId).map { list -> list.map { it.toDomain() } }
+
+    suspend fun savePlaythrough(mediaItemId: Int, playthrough: GamePlaythrough) {
+        val entity = GamePlaythroughEntity(
+            id           = playthrough.id,
+            mediaItemId  = mediaItemId,
+            title        = playthrough.title,
+            startDateMs  = playthrough.startDate?.time,
+            endDateMs    = playthrough.endDate?.time,
+            hoursPlayed  = playthrough.hoursPlayed,
+            notes        = playthrough.notes,
+        )
+        if (playthrough.id == 0) gamePlaythroughDao.insert(entity) else gamePlaythroughDao.update(entity)
+    }
+
+    suspend fun deletePlaythrough(id: Int) = gamePlaythroughDao.delete(id)
 }
