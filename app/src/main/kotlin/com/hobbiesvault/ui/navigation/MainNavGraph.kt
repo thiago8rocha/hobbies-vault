@@ -51,10 +51,10 @@ private data class BottomNavItem(
 
 private val bottomNavItems = listOf(
     BottomNavItem(Routes.GAMES,  "Jogos",  Icons.Outlined.SportsEsports, Icons.Filled.SportsEsports),
-    BottomNavItem(Routes.MANGA,  "Mangás", Icons.Outlined.MenuBook,      Icons.Filled.MenuBook),
-    BottomNavItem(Routes.BOOKS,  "Livros", Icons.Outlined.Book,           Icons.Filled.Book),
     BottomNavItem(Routes.FILMS,  "Filmes", Icons.Outlined.Movie,          Icons.Filled.Movie),
     BottomNavItem(Routes.SERIES, "Séries", Icons.Outlined.Tv,             Icons.Filled.Tv),
+    BottomNavItem(Routes.MANGA,  "Mangás", Icons.Outlined.MenuBook,      Icons.Filled.MenuBook),
+    BottomNavItem(Routes.BOOKS,  "Livros", Icons.Outlined.Book,           Icons.Filled.Book),
 )
 
 @Composable
