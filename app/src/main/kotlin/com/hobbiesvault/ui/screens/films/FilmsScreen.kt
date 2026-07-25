@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -33,6 +34,8 @@ import com.hobbiesvault.model.MediaItem
 import com.hobbiesvault.model.MediaStatus
 import com.hobbiesvault.model.MediaType
 import com.hobbiesvault.ui.components.EmptyState
+import com.hobbiesvault.ui.components.OverflowMenu
+import com.hobbiesvault.ui.components.OverflowMenuItem
 import com.hobbiesvault.ui.components.ProportionalTabRow
 import com.hobbiesvault.ui.navigation.Routes
 import com.hobbiesvault.ui.theme.ColorFilme
@@ -108,6 +111,7 @@ fun FilmsScreen(navController: NavController, vm: FilmsViewModel = viewModel()) 
     }
 
     // Dialogs / sheets
+    var showMenu          by remember { mutableStateOf(false) }
     var showCreateDialog  by remember { mutableStateOf(false) }
     var openList          by remember { mutableStateOf<MovieListEntity?>(null) }
     var deleteTarget      by remember { mutableStateOf<MovieListEntity?>(null) }
@@ -128,8 +132,15 @@ fun FilmsScreen(navController: NavController, vm: FilmsViewModel = viewModel()) 
                         IconButton(onClick = { navController.navigate(Routes.SEARCH) }) {
                             Icon(Icons.Outlined.Search, contentDescription = null)
                         }
-                        IconButton(onClick = { navController.navigate(Routes.SETTINGS) }) {
-                            Icon(Icons.Outlined.Settings, contentDescription = null)
+                        IconButton(onClick = { showMenu = true }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = null)
+                        }
+                        OverflowMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                            OverflowMenuItem(
+                                text    = "Configurações",
+                                icon    = Icons.Outlined.Settings,
+                                onClick = { showMenu = false; navController.navigate(Routes.SETTINGS) },
+                            )
                         }
                     }
                 )

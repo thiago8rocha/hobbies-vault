@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -33,6 +34,8 @@ import com.hobbiesvault.model.MediaItem
 import com.hobbiesvault.model.MediaStatus
 import com.hobbiesvault.model.MediaType
 import com.hobbiesvault.ui.components.EmptyState
+import com.hobbiesvault.ui.components.OverflowMenu
+import com.hobbiesvault.ui.components.OverflowMenuItem
 import com.hobbiesvault.ui.components.ProportionalTabRow
 import com.hobbiesvault.ui.navigation.Routes
 import com.hobbiesvault.ui.theme.ColorJogo
@@ -76,6 +79,7 @@ class GamesViewModel : ViewModel() {
 fun GamesScreen(navController: NavController, vm: GamesViewModel = viewModel()) {
     val allItems by vm.allItems.collectAsStateWithLifecycle()
     var showFilters  by remember { mutableStateOf(false) }
+    var showMenu     by remember { mutableStateOf(false) }
     var finishDialog by remember { mutableStateOf<MediaItem?>(null) }
 
     fun applyFilters(items: List<MediaItem>): List<MediaItem> {
@@ -133,7 +137,7 @@ fun GamesScreen(navController: NavController, vm: GamesViewModel = viewModel()) 
                         }
                         Box {
                             IconButton(onClick = { showFilters = true }) {
-                                Icon(Icons.Outlined.Tune, contentDescription = null)
+                                Icon(Icons.Outlined.FilterList, contentDescription = null)
                             }
                             if (vm.hasActiveFilters) {
                                 Box(
@@ -145,8 +149,15 @@ fun GamesScreen(navController: NavController, vm: GamesViewModel = viewModel()) 
                                 )
                             }
                         }
-                        IconButton(onClick = { navController.navigate(Routes.SETTINGS) }) {
-                            Icon(Icons.Outlined.Settings, contentDescription = null)
+                        IconButton(onClick = { showMenu = true }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = null)
+                        }
+                        OverflowMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                            OverflowMenuItem(
+                                text    = "Configurações",
+                                icon    = Icons.Outlined.Settings,
+                                onClick = { showMenu = false; navController.navigate(Routes.SETTINGS) },
+                            )
                         }
                     }
                 )
