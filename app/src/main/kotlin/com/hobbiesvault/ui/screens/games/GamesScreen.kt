@@ -28,6 +28,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.hobbiesvault.data.PlatformPreferences
 import com.hobbiesvault.data.db.DB
 import com.hobbiesvault.model.GameConsole
 import com.hobbiesvault.model.MediaItem
@@ -472,7 +473,10 @@ private fun FiltersSheet(
     var status  by remember { mutableStateOf(currentStatus) }
     var console by remember { mutableStateOf(currentConsole) }
 
-    val consoleOptions = listOf(GameConsole.STEAM, GameConsole.PC, GameConsole.PS5, GameConsole.PS4, GameConsole.NS, GameConsole.NS2)
+    val visibleConsoles by PlatformPreferences.visibleConsoles.collectAsStateWithLifecycle()
+    val consoleOptions = remember(visibleConsoles) {
+        GameConsole.entries.filter { it in visibleConsoles }
+    }
     val statusOptions  = listOf(
         MediaStatus.PLAYING, MediaStatus.REPLAYING,
         MediaStatus.FINISHED, MediaStatus.PLATINUM, MediaStatus.COMPLETED,

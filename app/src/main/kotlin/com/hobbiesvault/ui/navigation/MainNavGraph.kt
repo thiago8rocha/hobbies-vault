@@ -41,6 +41,7 @@ import com.hobbiesvault.ui.screens.settings.SettingsAppearanceScreen
 import com.hobbiesvault.ui.screens.settings.SettingsNotificationsScreen
 import com.hobbiesvault.ui.screens.settings.SettingsIntegrationsScreen
 import com.hobbiesvault.ui.screens.settings.SettingsDataScreen
+import com.hobbiesvault.ui.screens.settings.SettingsPlatformsScreen
 import com.hobbiesvault.ui.screens.HistoryScreen
 import com.hobbiesvault.ui.screens.stats.StatsScreen
 import com.hobbiesvault.ui.screens.stats.StatsDetailsScreen
@@ -158,6 +159,7 @@ fun MainNavGraph() {
             composable(Routes.SETTINGS_NOTIFICATIONS) { SettingsNotificationsScreen(navController) }
             composable(Routes.SETTINGS_INTEGRATIONS)  { SettingsIntegrationsScreen(navController) }
             composable(Routes.SETTINGS_DATA)          { SettingsDataScreen(navController) }
+            composable(Routes.SETTINGS_PLATFORMS)     { SettingsPlatformsScreen(navController) }
             composable(Routes.HISTORY)  { HistoryScreen(navController) }
             composable(Routes.STATS)    { StatsScreen(navController) }
             composable(Routes.STATS_DETAILS)       { StatsDetailsScreen(navController) }

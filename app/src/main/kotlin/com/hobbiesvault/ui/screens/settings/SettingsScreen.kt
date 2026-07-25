@@ -30,6 +30,7 @@ private val categories = listOf(
     SettingsCategory("Aparência",    "Temas, cores e modo de exibição", Icons.Default.Palette,      Routes.SETTINGS_APPEARANCE),
     SettingsCategory("Notificações", "Atualizações em segundo plano",   Icons.Default.Notifications, Routes.SETTINGS_NOTIFICATIONS),
     SettingsCategory("Integrações",  "Status das APIs conectadas",      Icons.Default.Cable,         Routes.SETTINGS_INTEGRATIONS),
+    SettingsCategory("Plataformas",  "Filtros de plataforma em Jogos",  Icons.Default.SportsEsports, Routes.SETTINGS_PLATFORMS),
     SettingsCategory("Dados",        "Cache e biblioteca",              Icons.Default.Storage,       Routes.SETTINGS_DATA),
 )
 

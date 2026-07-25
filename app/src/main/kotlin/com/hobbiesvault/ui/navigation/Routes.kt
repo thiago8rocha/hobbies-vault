@@ -23,6 +23,7 @@ object Routes {
     const val SETTINGS_NOTIFICATIONS = "settings/notifications"
     const val SETTINGS_INTEGRATIONS  = "settings/integrations"
     const val SETTINGS_DATA          = "settings/data"
+    const val SETTINGS_PLATFORMS     = "settings/platforms"
     const val HISTORY  = "history"
     const val STATS    = "stats"
     const val STATS_DETAILS       = "stats/details"

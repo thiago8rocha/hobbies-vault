@@ -1,6 +1,7 @@
 ﻿package com.hobbiesvault
 
 import android.app.Application
+import com.hobbiesvault.data.PlatformPreferences
 import com.hobbiesvault.data.db.DB
 import com.hobbiesvault.debug.DebugSeeder
 import com.hobbiesvault.service.ApiServices
@@ -19,6 +20,7 @@ class HobbiesVaultApp : Application() {
         super.onCreate()
         DB.init(this)
         NotificationHelper.init(this)
+        PlatformPreferences.init(this)
         appScope.launch {
             ApiServices.init(this@HobbiesVaultApp)
             // Import GiantBomb dataset on first run (no-op if already done)
