@@ -259,6 +259,19 @@ object MediaCacheService {
 
         if (result.isEmpty()) return null
 
+        // 3b. DLCs, expansões e recomendações (jogos similares)
+        if (ApiServices.igdbAvailable && externalIdInt != null) {
+            withContext(Dispatchers.IO) {
+                runCatching { ApiServices.igdb.getRelatedGames(externalIdInt) }.getOrNull()
+            }?.let { related ->
+                fun toMaps(list: List<com.hobbiesvault.service.IgdbRelatedGame>) =
+                    list.map { mapOf("igdbId" to it.igdbId, "title" to it.title, "coverUrl" to it.coverUrl) }
+                if (related.dlcs.isNotEmpty())            result["dlcs"] = toMaps(related.dlcs)
+                if (related.expansions.isNotEmpty())      result["expansions"] = toMaps(related.expansions)
+                if (related.recommendations.isNotEmpty()) result["recommendations"] = toMaps(related.recommendations)
+            }
+        }
+
         // 4. Steam achievements
         if (ApiServices.steamAvailable && item.externalId != null) {
             withContext(Dispatchers.IO) {

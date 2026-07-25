@@ -145,6 +145,32 @@ class IgdbService(private val clientId: String, private val accessToken: String)
         return mapGame(results.first()) ?: ApiSearchResult(externalId = igdbId.toString(), title = "")
     }
 
+    /** DLCs, expansões e jogos similares (recomendações), numa única chamada via campos aninhados. */
+    fun getRelatedGames(igdbId: Int): IgdbRelatedGames {
+        val body = "fields dlcs.name, dlcs.cover.url, expansions.name, expansions.cover.url, " +
+            "similar_games.name, similar_games.cover.url; where id = $igdbId; limit 1;"
+        val results = post("games", body)
+        val r = results.firstOrNull() ?: return IgdbRelatedGames(emptyList(), emptyList(), emptyList())
+
+        fun mapEntries(key: String): List<IgdbRelatedGame> =
+            (r[key] as? List<*>)?.filterIsInstance<Map<String, Any?>>()?.mapNotNull { g ->
+                val name = g["name"] as? String ?: return@mapNotNull null
+                val id   = (g["id"] as? Double)?.toInt() ?: return@mapNotNull null
+                val rawCover = (g["cover"] as? Map<*, *>)?.get("url") as? String
+                val cover = rawCover?.let {
+                    val url = if (it.startsWith("//")) "https:$it" else it
+                    url.replace(Regex("t_(thumb|cover_small|cover_med|screenshot_med|screenshot_big)"), "t_$coverSize")
+                }
+                IgdbRelatedGame(igdbId = id, title = name, coverUrl = cover)
+            } ?: emptyList()
+
+        return IgdbRelatedGames(
+            dlcs            = mapEntries("dlcs"),
+            expansions      = mapEntries("expansions"),
+            recommendations = mapEntries("similar_games"),
+        )
+    }
+
     fun getTimeToBeat(igdbId: Int): IgdbTimeToBeat? {
         val body = "where game = $igdbId; fields hastily, normally, completely; limit 1;"
         val results = post("game_time_to_beats", body)
@@ -282,6 +308,14 @@ class IgdbService(private val clientId: String, private val accessToken: String)
         )
     }
 }
+
+data class IgdbRelatedGame(val igdbId: Int, val title: String, val coverUrl: String?)
+
+data class IgdbRelatedGames(
+    val dlcs: List<IgdbRelatedGame>,
+    val expansions: List<IgdbRelatedGame>,
+    val recommendations: List<IgdbRelatedGame>,
+)
 
 data class IgdbTimeToBeat(
     val hastily: Int? = null,

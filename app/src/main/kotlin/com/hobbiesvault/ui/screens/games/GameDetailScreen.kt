@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -39,6 +41,7 @@ import com.hobbiesvault.service.ApiServices
 import com.hobbiesvault.service.HltbResult
 import com.hobbiesvault.service.ItadDeal
 import com.hobbiesvault.service.MediaCacheService
+import com.hobbiesvault.ui.components.CoverImage
 import com.hobbiesvault.ui.components.NotesDialog
 import com.hobbiesvault.ui.theme.ColorJogo
 import kotlinx.coroutines.Dispatchers
@@ -167,6 +170,9 @@ fun GameDetailScreen(
     val publisher    = cache?.get("publisher") as? String
     val platforms    = (cache?.get("platforms") as? List<*>)?.filterIsInstance<String>()
     val releaseDateMs = (cache?.get("releaseDate") as? Double)?.toLong()
+    val dlcs          = (cache?.get("dlcs") as? List<*>)?.filterIsInstance<Map<String, Any?>>()
+    val expansions    = (cache?.get("expansions") as? List<*>)?.filterIsInstance<Map<String, Any?>>()
+    val recommendations = (cache?.get("recommendations") as? List<*>)?.filterIsInstance<Map<String, Any?>>()
 
     val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")) }
     val currentPlatformLabel = consoleDisplayName(console)
@@ -418,6 +424,25 @@ fun GameDetailScreen(
                     }
                 }
 
+                // ── DLCs e Expansões ────────────────────────────────────────────
+                if (!dlcs.isNullOrEmpty() || !expansions.isNullOrEmpty()) {
+                    item {
+                        Column(contentPad) {
+                            GameSectionTitle("DLCs e Expansões")
+                            Spacer(Modifier.height(12.dp))
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                items((expansions.orEmpty() + dlcs.orEmpty())) { g ->
+                                    GameRelatedTile(
+                                        title    = g["title"] as? String ?: "",
+                                        coverUrl = g["coverUrl"] as? String,
+                                    )
+                                }
+                            }
+                            Spacer(Modifier.height(24.dp))
+                        }
+                    }
+                }
+
                 // ── Datas ─────────────────────────────────────────────────────
                 item {
                     Column(contentPad) {
@@ -480,6 +505,25 @@ fun GameDetailScreen(
                             GameSectionTitle(if (console?.isPlayStation == true) "Troféus" else "Conquistas")
                             Spacer(Modifier.height(10.dp))
                             AchievementsCard(mediaItem, console?.isPlayStation == true, platformColor)
+                            Spacer(Modifier.height(24.dp))
+                        }
+                    }
+                }
+
+                // ── Recomendações ────────────────────────────────────────────────
+                if (!recommendations.isNullOrEmpty()) {
+                    item {
+                        Column(contentPad) {
+                            GameSectionTitle("Recomendações")
+                            Spacer(Modifier.height(12.dp))
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                items(recommendations) { g ->
+                                    GameRelatedTile(
+                                        title    = g["title"] as? String ?: "",
+                                        coverUrl = g["coverUrl"] as? String,
+                                    )
+                                }
+                            }
                             Spacer(Modifier.height(24.dp))
                         }
                     }
@@ -638,6 +682,24 @@ private fun PlatformTag(label: String, highlighted: Boolean, color: Color) {
                 modifier   = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
             )
         }
+    }
+}
+
+@Composable
+private fun GameRelatedTile(title: String, coverUrl: String?) {
+    Column(Modifier.width(90.dp)) {
+        CoverImage(
+            url      = coverUrl,
+            modifier = Modifier.width(90.dp).height(130.dp).clip(RoundedCornerShape(6.dp)),
+        )
+        Spacer(Modifier.height(5.dp))
+        Text(
+            title,
+            style     = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.SemiBold,
+            maxLines  = 2,
+            overflow  = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+        )
     }
 }
 
