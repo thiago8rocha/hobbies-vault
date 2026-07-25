@@ -1,5 +1,7 @@
 ﻿package com.hobbiesvault.ui.navigation
 
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -9,9 +11,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.*
+import kotlin.math.abs
 import com.hobbiesvault.model.MediaItem
 import com.hobbiesvault.ui.screens.games.AddGameScreen
 import com.hobbiesvault.ui.screens.games.GameDetailScreen
@@ -77,13 +83,7 @@ fun MainNavGraph() {
                         val selected = selectedIndex == index
                         NavigationBarItem(
                             selected  = selected,
-                            onClick   = {
-                                navController.navigate(item.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState    = true
-                                }
-                            },
+                            onClick   = { navController.navigateToHobbyTab(item.route) },
                             icon      = {
                                 Icon(
                                     if (selected) item.activeIcon else item.icon,
@@ -101,7 +101,19 @@ fun MainNavGraph() {
         NavHost(
             navController    = navController,
             startDestination = Routes.HOME,
-            modifier         = Modifier.padding(bottom = innerPadding.calculateBottomPadding()),
+            modifier         = Modifier
+                .padding(bottom = innerPadding.calculateBottomPadding())
+                .hobbySwipeNavigation(
+                    enabled = selectedIndex != null,
+                    onSwipeLeft  = {
+                        val next = (selectedIndex ?: 0) + 1
+                        if (next < bottomNavItems.size) navController.navigateToHobbyTab(bottomNavItems[next].route)
+                    },
+                    onSwipeRight = {
+                        val prev = (selectedIndex ?: 0) - 1
+                        if (prev >= 0) navController.navigateToHobbyTab(bottomNavItems[prev].route)
+                    },
+                ),
         ) {
             composable(Routes.HOME)    { HomeScreen(navController) }
             composable(Routes.GAMES)   { GamesScreen(navController) }
@@ -152,6 +164,53 @@ fun MainNavGraph() {
             composable(Routes.STATS_FILTERED_LIST) { StatsFilteredListScreen(navController) }
             composable(Routes.CALENDAR) { CalendarScreen(navController) }
             composable(Routes.ABOUT)    { AboutScreen(navController) }
+        }
+    }
+}
+
+private fun androidx.navigation.NavController.navigateToHobbyTab(route: String) {
+    navigate(route) {
+        popUpTo(graph.findStartDestination().id) { saveState = true }
+        launchSingleTop = true
+        restoreState    = true
+    }
+}
+
+/**
+ * Detecta um arraste predominantemente horizontal (com viés de 1.5x sobre o vertical antes de
+ * decidir) para não competir com o scroll vertical das grades — só passa a consumir o gesto
+ * depois de confirmar que é uma navegação por swipe, então listas verticais continuam intactas.
+ */
+private fun Modifier.hobbySwipeNavigation(
+    enabled: Boolean,
+    onSwipeLeft: () -> Unit,
+    onSwipeRight: () -> Unit,
+): Modifier {
+    if (!enabled) return this
+    return this.pointerInput(onSwipeLeft, onSwipeRight) {
+        awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = false)
+            var isHorizontal: Boolean? = null
+            var totalDx = 0f
+            var totalDy = 0f
+            while (true) {
+                val event = awaitPointerEvent()
+                val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                if (change.changedToUpIgnoreConsumed()) {
+                    if (isHorizontal == true) {
+                        if (totalDx < -120f) onSwipeLeft()
+                        else if (totalDx > 120f) onSwipeRight()
+                    }
+                    break
+                }
+                val delta = change.positionChange()
+                totalDx += delta.x
+                totalDy += delta.y
+                if (isHorizontal == null && (abs(totalDx) > 16f || abs(totalDy) > 16f)) {
+                    isHorizontal = abs(totalDx) > abs(totalDy) * 1.5f
+                }
+                if (isHorizontal == true) change.consume()
+            }
         }
     }
 }
