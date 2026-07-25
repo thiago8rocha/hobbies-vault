@@ -634,7 +634,7 @@ private fun AddSheet(
                 },
                 enabled  = selectedStatus != null && (type != MediaType.GAME || selectedConsole != null),
                 colors   = ButtonDefaults.buttonColors(containerColor = typeColor),
-                shape    = RoundedCornerShape(0.dp),
+                shape    = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text("Adicionar ${type.labelPt.lowercase()}", color = Color.White)

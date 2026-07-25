@@ -601,7 +601,7 @@ private fun PlatformTag(label: String, highlighted: Boolean, color: Color) {
                 width = if (highlighted) 1.5.dp else 1.dp,
                 color = if (highlighted) color.copy(alpha = 0.7f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
             ),
-            shape = RoundedCornerShape(0.dp),
+            shape = RoundedCornerShape(12.dp),
         ) {
             Text(
                 label,
@@ -624,7 +624,7 @@ private fun HltbCard(hltb: HltbResult, color: Color) {
     Surface(
         color  = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)),
-        shape  = RoundedCornerShape(0.dp),
+        shape  = RoundedCornerShape(12.dp),
     ) {
         IntrinsicRow {
             HltbItem(Icons.Default.MenuBook, "História",    fmtSec(hltb.mainStorySeconds),     color)
@@ -664,7 +664,7 @@ private fun AchievementsCard(item: MediaItem, isPS: Boolean, color: Color) {
     Surface(
         color  = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)),
-        shape  = RoundedCornerShape(0.dp),
+        shape  = RoundedCornerShape(12.dp),
     ) {
         Column(Modifier.fillMaxWidth().padding(14.dp)) {
             if (pct != null) {

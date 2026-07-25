@@ -622,7 +622,7 @@ private fun SeasonCard(
 
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-        shape    = RoundedCornerShape(0.dp),
+        shape    = RoundedCornerShape(12.dp),
     ) {
         Column {
             Row(

@@ -344,7 +344,7 @@ fun BookDetailScreen(
                 Column(Modifier.padding(horizontal = 16.dp)) {
                     Text("Informações", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                     Spacer(Modifier.height(10.dp))
-                    Card(shape = RoundedCornerShape(0.dp)) {
+                    Card(shape = RoundedCornerShape(12.dp)) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             if (!authors.isNullOrEmpty())   BookInfoRow("Autor", authors.joinToString(", "))
                             if (publisher != null)           BookInfoRow("Editora", publisher)
@@ -373,7 +373,7 @@ fun BookDetailScreen(
                         }
                     }
                     Spacer(Modifier.height(10.dp))
-                    Card(shape = RoundedCornerShape(0.dp)) {
+                    Card(shape = RoundedCornerShape(12.dp)) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             val displayedPage = (mediaItem.currentProgress ?: 0).let { p ->
                                 if (pages != null) p.coerceIn(0, pages) else p
@@ -427,7 +427,7 @@ fun BookDetailScreen(
                 Column(Modifier.padding(horizontal = 16.dp)) {
                     Text("Datas", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                     Spacer(Modifier.height(10.dp))
-                    Card(shape = RoundedCornerShape(0.dp)) {
+                    Card(shape = RoundedCornerShape(12.dp)) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             if (mediaItem.readingStartDate != null) {
                                 BookInfoRow("Início", dateFormatter.format(mediaItem.readingStartDate))

@@ -406,7 +406,7 @@ fun MangaDetailScreen(
                     Column(Modifier.padding(horizontal = 16.dp)) {
                         MangaSectionTitle("Informações")
                         Spacer(Modifier.height(10.dp))
-                        Card(shape = RoundedCornerShape(0.dp)) {
+                        Card(shape = RoundedCornerShape(12.dp)) {
                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                 if (format != null)            MangaInfoRow("Formato", format)
                                 if (!genres.isNullOrEmpty())   MangaInfoRow("Gênero", genres.take(3).joinToString(", "))
@@ -424,7 +424,7 @@ fun MangaDetailScreen(
                     Column(Modifier.padding(horizontal = 16.dp)) {
                         MangaSectionTitle("Datas")
                         Spacer(Modifier.height(10.dp))
-                        Card(shape = RoundedCornerShape(0.dp)) {
+                        Card(shape = RoundedCornerShape(12.dp)) {
                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                 if (startDateMs != null) MangaInfoRow("Início", dateFormatter.format(java.util.Date(startDateMs)))
                                 if (endDateMs != null)   MangaInfoRow("Conclusão", dateFormatter.format(java.util.Date(endDateMs)))
@@ -465,7 +465,7 @@ fun MangaDetailScreen(
                                 }
                             }
                             Spacer(Modifier.height(10.dp))
-                            Card(shape = RoundedCornerShape(0.dp)) {
+                            Card(shape = RoundedCornerShape(12.dp)) {
                                 Column(Modifier.padding(16.dp)) {
                                     if (editingPersonal) {
                                         StarRatingPicker(rating = pendingRating, onRatingChange = { pendingRating = it })
@@ -489,7 +489,7 @@ fun MangaDetailScreen(
                         Column(Modifier.padding(horizontal = 16.dp)) {
                             MangaSectionTitle("Resenha")
                             Spacer(Modifier.height(10.dp))
-                            Card(shape = RoundedCornerShape(0.dp)) {
+                            Card(shape = RoundedCornerShape(12.dp)) {
                                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                                     if (editingPersonal) {
                                         OutlinedTextField(
@@ -511,7 +511,7 @@ fun MangaDetailScreen(
                                             OutlinedButton(
                                                 onClick  = { editingPersonal = false },
                                                 modifier = Modifier.weight(1f),
-                                                shape    = RoundedCornerShape(0.dp),
+                                                shape    = RoundedCornerShape(12.dp),
                                             ) { Text("Cancelar") }
                                             Button(
                                                 onClick = {
@@ -523,7 +523,7 @@ fun MangaDetailScreen(
                                                     editingPersonal = false
                                                 },
                                                 modifier = Modifier.weight(1f),
-                                                shape    = RoundedCornerShape(0.dp),
+                                                shape    = RoundedCornerShape(12.dp),
                                                 colors   = ButtonDefaults.buttonColors(containerColor = ColorManga),
                                             ) { Text("Salvar") }
                                         }
@@ -560,7 +560,7 @@ fun MangaDetailScreen(
                         Column(Modifier.padding(horizontal = 16.dp)) {
                             MangaSectionTitle("Leituras anteriores")
                             Spacer(Modifier.height(10.dp))
-                            Card(shape = RoundedCornerShape(0.dp)) {
+                            Card(shape = RoundedCornerShape(12.dp)) {
                                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                                     vm.reviewHistory.forEachIndexed { index, review ->
                                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
