@@ -42,6 +42,7 @@ import com.hobbiesvault.model.MediaStatus
 import com.hobbiesvault.service.ApiServices
 import com.hobbiesvault.service.HltbResult
 import com.hobbiesvault.service.ItadDeal
+import com.hobbiesvault.service.ItadPricePoint
 import com.hobbiesvault.service.MediaCacheService
 import com.hobbiesvault.ui.components.CoverImage
 import com.hobbiesvault.ui.components.NotesDialog
@@ -58,6 +59,7 @@ class GameDetailViewModel : ViewModel() {
     var loadingCache by mutableStateOf(true)
     var hltbResult by mutableStateOf<HltbResult?>(null)
     var itadDeals by mutableStateOf<List<ItadDeal>>(emptyList())
+    var priceHistory by mutableStateOf<List<ItadPricePoint>>(emptyList())
     private var initialized = false
 
     fun init(initial: MediaItem) {
@@ -82,6 +84,12 @@ class GameDetailViewModel : ViewModel() {
             if (steamAppId != null) {
                 viewModelScope.launch(Dispatchers.IO) {
                     itadDeals = runCatching { ApiServices.itad?.getPrices(steamAppId) ?: emptyList() }.getOrNull() ?: emptyList()
+                }
+                viewModelScope.launch(Dispatchers.IO) {
+                    val uuid = runCatching { ApiServices.itad?.lookupGameUuid(steamAppId) }.getOrNull()
+                    if (uuid != null) {
+                        priceHistory = runCatching { ApiServices.itad?.getPriceHistory(uuid) ?: emptyList() }.getOrNull() ?: emptyList()
+                    }
                 }
             }
         }
@@ -548,6 +556,41 @@ fun GameDetailScreen(
                             Spacer(Modifier.height(10.dp))
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 vm.itadDeals.sortedBy { it.price }.forEach { deal -> PriceDealTile(deal, platformColor) }
+                            }
+                            if (vm.priceHistory.size >= 2) {
+                                Spacer(Modifier.height(16.dp))
+                                Text(
+                                    "Menor preço ao longo do tempo",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                )
+                                Spacer(Modifier.height(8.dp))
+                                val runningMinPoints = remember(vm.priceHistory) {
+                                    var min = Double.MAX_VALUE
+                                    vm.priceHistory.map { p ->
+                                        min = minOf(min, p.price)
+                                        com.hobbiesvault.ui.components.LinePoint(p.timestampMs.toFloat(), min.toFloat())
+                                    }
+                                }
+                                com.hobbiesvault.ui.components.LineChartCanvas(
+                                    points    = runningMinPoints,
+                                    lineColor = platformColor,
+                                    modifier  = Modifier.fillMaxWidth().height(80.dp),
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text(
+                                        dateFormatter.format(java.util.Date(vm.priceHistory.first().timestampMs)),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                                    )
+                                    Text(
+                                        "R$ %.2f menor preço".format(runningMinPoints.last().y),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = platformColor,
+                                    )
+                                }
                             }
                             Spacer(Modifier.height(24.dp))
                         }
