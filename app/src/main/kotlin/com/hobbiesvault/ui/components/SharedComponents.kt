@@ -6,6 +6,10 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -30,8 +34,79 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.hobbiesvault.model.MediaStatus
+
+// ── Overflow menu (estilo Rokku: escurece o fundo e abre ancorado no canto
+// superior direito, logo abaixo da top bar, em vez do DropdownMenu padrão sem
+// scrim do Material) ───────────────────────────────────────────────────────
+@Composable
+fun OverflowMenu(
+    expanded: Boolean,
+    onDismissRequest: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    if (!expanded) return
+    Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.4f))
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication        = null,
+                    onClick           = onDismissRequest,
+                ),
+        ) {
+            Column(Modifier.align(Alignment.TopEnd)) {
+                Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
+                Spacer(Modifier.height(56.dp))
+                Surface(
+                    modifier        = Modifier.padding(end = 10.dp).widthIn(min = 230.dp),
+                    shape           = RoundedCornerShape(14.dp),
+                    tonalElevation  = 3.dp,
+                    shadowElevation = 8.dp,
+                ) {
+                    Column(Modifier.padding(vertical = 6.dp), content = content)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun OverflowMenuItem(
+    text: String,
+    icon: ImageVector,
+    onClick: () -> Unit,
+    subtitle: String? = null,
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(icon, null, modifier = Modifier.size(22.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.width(16.dp))
+        Column {
+            Text(text, style = MaterialTheme.typography.bodyMedium)
+            if (subtitle != null) {
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                )
+            }
+        }
+    }
+}
 
 // ── Proportional Tab Row ──────────────────────────────────────────────────────
 // Cada aba recebe largura proporcional ao texto medido, preenchendo a tela sem scroll.

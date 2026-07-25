@@ -34,6 +34,8 @@ import com.hobbiesvault.model.GameConsole
 import com.hobbiesvault.model.MediaItem
 import com.hobbiesvault.model.MediaStatus
 import com.hobbiesvault.model.MediaType
+import com.hobbiesvault.ui.components.OverflowMenu
+import com.hobbiesvault.ui.components.OverflowMenuItem
 import com.hobbiesvault.ui.navigation.Routes
 import com.hobbiesvault.ui.theme.*
 import kotlinx.coroutines.flow.SharingStarted
@@ -90,30 +92,28 @@ fun HomeScreen(navController: NavController, vm: HomeViewModel = viewModel()) {
                 title = { Text("HobbiesVault") },
                 actions = {
                     IconButton(onClick = { navController.navigate(Routes.CALENDAR) }) { Icon(Icons.Outlined.CalendarMonth, "") }
-                    Box {
-                        IconButton(onClick = { showMenu = true }) { Icon(Icons.Default.MoreVert, "") }
-                        DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                            DropdownMenuItem(
-                                text    = { Text("Configurações") },
-                                leadingIcon = { Icon(Icons.Outlined.Settings, null) },
-                                onClick = { showMenu = false; navController.navigate(Routes.SETTINGS) },
-                            )
-                            DropdownMenuItem(
-                                text    = { Text("Status") },
-                                leadingIcon = { Icon(Icons.Outlined.BarChart, null) },
-                                onClick = { showMenu = false; navController.navigate(Routes.STATS) },
-                            )
-                            DropdownMenuItem(
-                                text    = { Text("Histórico") },
-                                leadingIcon = { Icon(Icons.Outlined.History, null) },
-                                onClick = { showMenu = false; navController.navigate(Routes.HISTORY) },
-                            )
-                            DropdownMenuItem(
-                                text    = { Text("Sobre") },
-                                leadingIcon = { Icon(Icons.Outlined.Info, null) },
-                                onClick = { showMenu = false; navController.navigate(Routes.ABOUT) },
-                            )
-                        }
+                    IconButton(onClick = { showMenu = true }) { Icon(Icons.Default.MoreVert, "") }
+                    OverflowMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                        OverflowMenuItem(
+                            text    = "Configurações",
+                            icon    = Icons.Outlined.Settings,
+                            onClick = { showMenu = false; navController.navigate(Routes.SETTINGS) },
+                        )
+                        OverflowMenuItem(
+                            text    = "Status",
+                            icon    = Icons.Outlined.BarChart,
+                            onClick = { showMenu = false; navController.navigate(Routes.STATS) },
+                        )
+                        OverflowMenuItem(
+                            text    = "Histórico",
+                            icon    = Icons.Outlined.History,
+                            onClick = { showMenu = false; navController.navigate(Routes.HISTORY) },
+                        )
+                        OverflowMenuItem(
+                            text    = "Sobre",
+                            icon    = Icons.Outlined.Info,
+                            onClick = { showMenu = false; navController.navigate(Routes.ABOUT) },
+                        )
                     }
                 }
             )
